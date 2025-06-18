@@ -52,9 +52,9 @@
   --card-foreground: oklch(0.98 0 0);
   --popover: oklch(0.1 0 0);
   --popover-foreground: oklch(0.98 0 0);
-  /* Bright accent color for CTAs and highlights */
-  --primary: oklch(0.7 0.15 264); /* Bright blue/purple accent */
-  --primary-foreground: oklch(0.98 0 0);
+  /* Premium Electric Blue - AI-centric and luminous */
+  --primary: oklch(0.65 0.25 230); /* Bright electric blue with high chroma */
+  --primary-foreground: oklch(0.05 0 0); /* Deep black text on bright primary */
   --secondary: oklch(0.15 0 0); /* Dark gray */
   --secondary-foreground: oklch(0.9 0 0);
   --muted: oklch(0.18 0 0); /* Muted dark gray */
@@ -64,20 +64,20 @@
   --destructive: oklch(0.65 0.2 15); /* Red for errors */
   --border: oklch(0.25 0 0); /* Subtle borders */
   --input: oklch(0.15 0 0); /* Input backgrounds */
-  --ring: oklch(0.7 0.15 264); /* Focus rings match primary */
-  --chart-1: oklch(0.7 0.15 264);
-  --chart-2: oklch(0.65 0.2 180);
-  --chart-3: oklch(0.6 0.18 120);
-  --chart-4: oklch(0.75 0.12 60);
-  --chart-5: oklch(0.8 0.15 300);
+  --ring: oklch(0.65 0.25 230); /* Focus rings match primary - electric blue */
+  --chart-1: oklch(0.65 0.25 230); /* Electric blue */
+  --chart-2: oklch(0.7 0.2 200); /* Cyan accent */
+  --chart-3: oklch(0.6 0.18 260); /* Purple-blue */
+  --chart-4: oklch(0.75 0.15 180); /* Bright cyan */
+  --chart-5: oklch(0.8 0.2 280); /* Violet accent */
   --sidebar: oklch(0.1 0 0);
   --sidebar-foreground: oklch(0.9 0 0);
-  --sidebar-primary: oklch(0.7 0.15 264);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-primary: oklch(0.65 0.25 230); /* Electric blue */
+  --sidebar-primary-foreground: oklch(0.05 0 0);
   --sidebar-accent: oklch(0.15 0 0);
   --sidebar-accent-foreground: oklch(0.9 0 0);
   --sidebar-border: oklch(0.2 0 0);
-  --sidebar-ring: oklch(0.7 0.15 264);
+  --sidebar-ring: oklch(0.65 0.25 230); /* Electric blue */
 }
 
 .dark {
@@ -88,8 +88,9 @@
   --card-foreground: oklch(1 0 0);
   --popover: oklch(0.08 0 0);
   --popover-foreground: oklch(1 0 0);
-  --primary: oklch(0.75 0.18 264); /* Slightly brighter primary in dark mode */
-  --primary-foreground: oklch(0.08 0 0); /* Dark text on bright primary */
+  /* Even more luminous electric blue for dark mode */
+  --primary: oklch(0.7 0.28 225); /* Brighter, more saturated electric blue */
+  --primary-foreground: oklch(0.03 0 0); /* Almost pure black text */
   --secondary: oklch(0.12 0 0);
   --secondary-foreground: oklch(0.95 0 0);
   --muted: oklch(0.15 0 0);
@@ -99,20 +100,20 @@
   --destructive: oklch(0.7 0.25 15);
   --border: oklch(0.2 0 0);
   --input: oklch(0.12 0 0);
-  --ring: oklch(0.75 0.18 264);
-  --chart-1: oklch(0.75 0.18 264);
-  --chart-2: oklch(0.7 0.25 180);
-  --chart-3: oklch(0.65 0.22 120);
-  --chart-4: oklch(0.8 0.15 60);
-  --chart-5: oklch(0.85 0.18 300);
+  --ring: oklch(0.7 0.28 225); /* Bright electric blue focus ring */
+  --chart-1: oklch(0.7 0.28 225); /* Electric blue */
+  --chart-2: oklch(0.75 0.25 200); /* Bright cyan */
+  --chart-3: oklch(0.65 0.22 260); /* Purple-blue */
+  --chart-4: oklch(0.8 0.2 180); /* Luminous cyan */
+  --chart-5: oklch(0.85 0.25 280); /* Bright violet */
   --sidebar: oklch(0.08 0 0);
   --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.75 0.18 264);
-  --sidebar-primary-foreground: oklch(0.08 0 0);
+  --sidebar-primary: oklch(0.7 0.28 225); /* Electric blue */
+  --sidebar-primary-foreground: oklch(0.03 0 0);
   --sidebar-accent: oklch(0.12 0 0);
   --sidebar-accent-foreground: oklch(0.95 0 0);
   --sidebar-border: oklch(0.18 0 0);
-  --sidebar-ring: oklch(0.75 0.18 264);
+  --sidebar-ring: oklch(0.7 0.28 225); /* Electric blue */
 }
 
 @layer base {
@@ -126,14 +127,25 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Enhanced selection styling for better contrast */
+  /* Enhanced selection styling with electric blue */
   ::selection {
-    background: oklch(0.7 0.15 264 / 0.3);
+    background: oklch(0.7 0.28 225 / 0.4);
     color: oklch(1 0 0);
   }
 
   /* Smooth scrolling for better UX */
   html {
     scroll-behavior: smooth;
+  }
+
+  /* Custom glow effects for premium feel */
+  .glow-primary {
+    box-shadow: 0 0 20px oklch(0.7 0.28 225 / 0.3),
+      0 0 40px oklch(0.7 0.28 225 / 0.1);
+  }
+
+  .glow-primary-strong {
+    box-shadow: 0 0 30px oklch(0.7 0.28 225 / 0.4),
+      0 0 60px oklch(0.7 0.28 225 / 0.2);
   }
 }

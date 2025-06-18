@@ -6,71 +6,70 @@ import { useState, useEffect, ReactNode } from "react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-/**
- * A custom hook to safely access window.location.hash on the client.
- * It returns the hash value only after the component has mounted.
- * This avoids server-client hydration mismatches.
- */
-function useClientHash() {
-  const [hash, setHash] = useState("");
-  const [isMounted, setIsMounted] = useState(false);
+type NavLinkProps = {
+  href: string;
+  children: ReactNode;
+  onClick?: () => void;
+};
+
+export default function NavLink({ href, children, onClick }: NavLinkProps) {
+  const pathname = usePathname();
+  const [currentHash, setCurrentHash] = useState("");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
+    setMounted(true);
+
+    // Set initial hash
+    setCurrentHash(window.location.hash);
 
     const handleHashChange = () => {
-      setHash(window.location.hash);
+      setCurrentHash(window.location.hash);
     };
 
-    // Set the initial hash
-    handleHashChange();
-
     window.addEventListener("hashchange", handleHashChange);
+
     return () => {
       window.removeEventListener("hashchange", handleHashChange);
     };
   }, []);
 
-  // Only return the hash if the component is mounted on the client
-  return isMounted ? hash : "";
-}
-
-type NavLinkProps = {
-  href: string;
-  children: ReactNode;
-  onClick?: () => void; // Optional onClick handler
-};
-
-export default function NavLink({ href, children, onClick }: NavLinkProps) {
-  const pathname = usePathname();
-  const clientHash = useClientHash();
+  // Don't render active state until mounted to avoid hydration mismatch
+  if (!mounted) {
+    return (
+      <Link
+        href={href}
+        className="relative transition hover:text-primary"
+        onClick={onClick}
+      >
+        {children}
+      </Link>
+    );
+  }
 
   const [linkPath, linkHash] = href.split("#");
-
-  // Determine if the link is active
   let isActive = false;
+
   if (linkHash) {
-    // It's a hash link (e.g., "/#pricing")
-    // Active if the path matches and the client hash matches
+    // Hash link like "/#pricing"
     const pathMatches = (linkPath || "/") === pathname;
-    const hashMatches = clientHash === `#${linkHash}`;
+    const hashMatches = currentHash === `#${linkHash}`;
     isActive = pathMatches && hashMatches;
   } else {
-    // It's a regular link (e.g., "/sign-in")
+    // Regular link
     if (href === "/") {
-      // The root link is only active on the exact root path
-      isActive = pathname === "/";
+      // Root link is active only when on root path with no hash
+      isActive = pathname === "/" && currentHash === "";
     } else {
-      // Other links are active if the current path starts with the href
-      isActive = pathname.startsWith(href);
+      // Other links match exactly
+      isActive = pathname === href;
     }
   }
 
-  // Use twMerge and clsx for robust and clean class name management
   const classes = twMerge(
     clsx(
       "relative transition hover:text-primary",
-      "after:absolute after:left-0 after:-bottom-0.5 after:h-px after:bg-black after:transition-all after:duration-150",
+      "after:absolute after:left-0 after:-bottom-0.5 after:h-px after:bg-gradient-to-r after:from-primary after:to-primary/80 after:transition-all after:duration-150 after:shadow-sm after:shadow-primary/30",
       {
         "text-primary after:w-full": isActive,
         "after:w-0 hover:after:w-full": !isActive,

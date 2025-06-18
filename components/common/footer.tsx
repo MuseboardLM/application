@@ -43,7 +43,7 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-muted-foreground text-lg leading-relaxed max-w-md">
-              Keep your mission, dreams, and goals front of mind. All the time.
+              Re-shape your thinking.
             </p>
             <div className="flex items-center gap-4">
               {footerLinks.social.map((item) => {

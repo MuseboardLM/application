@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Crop, Menu, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import NavLink from "./nav-link";
 
 const navLinks = [
@@ -42,13 +43,14 @@ export default function Header() {
       <nav className="hidden md:flex items-center gap-6">
         {navLinks.map((link) =>
           link.isButton ? (
-            <Link
+            <Button
               key={link.href}
-              href={link.href}
-              className="px-6 py-2.5 bg-primary hover:bg-primary/90 rounded-full text-sm font-semibold text-primary-foreground transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-primary/25"
+              variant="white"
+              asChild
+              className="px-6 py-2.5 rounded-xl text-sm font-semibold"
             >
-              {link.label}
-            </Link>
+              <Link href={link.href}>{link.label}</Link>
+            </Button>
           ) : (
             <NavLink key={link.href} href={link.href}>
               {link.label}
@@ -83,14 +85,16 @@ export default function Header() {
         >
           {navLinks.map((link) =>
             link.isButton ? (
-              <Link
+              <Button
                 key={link.href}
-                href={link.href}
-                onClick={closeMobileMenu}
-                className="block w-full text-center px-6 py-3 bg-primary hover:bg-primary/90 rounded-full text-base font-semibold text-primary-foreground transition-all duration-200"
+                variant="white"
+                asChild
+                className="w-full px-6 py-3 rounded-xl text-base font-semibold"
               >
-                {link.label}
-              </Link>
+                <Link href={link.href} onClick={closeMobileMenu}>
+                  {link.label}
+                </Link>
+              </Button>
             ) : (
               <NavLink
                 key={link.href}
