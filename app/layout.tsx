@@ -22,9 +22,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${fontSans.variable} font-sans antialiased`}>
-        <div className="relative flex min-h-screen flex-col">
+    <html lang="en" className="dark">
+      <body
+        className={`${fontSans.variable} font-sans antialiased bg-background text-foreground`}
+      >
+        <div className="relative flex min-h-screen flex-col bg-background">
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />
