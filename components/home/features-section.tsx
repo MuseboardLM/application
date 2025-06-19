@@ -22,7 +22,7 @@ const features = [
     icon: Sparkles,
     title: "Stay sharp and switched on",
     description:
-      "Keep your mission, dreams, and goals front-of-mind and your thinking in forward motion. No autopilot. No forgetting what you said you’d become. Every time you open it, your Muse reminds you who you really are.",
+      "Keep your mission, dreams, and goals front-of-mind and your thinking in forward motion. No autopilot. No forgetting what you said you'd become. Every time you open it, your Muse reminds you who you really are.",
     image: "/api/placeholder/400/300", // You'll replace this with actual images
     imageAlt: "Personal growth dashboard with progress tracking",
   },
@@ -30,13 +30,7 @@ const features = [
 
 export default function FeaturesSection() {
   return (
-    <section className="py-8 bg-background relative overflow-hidden">
-      {/* Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-72 h-72 bg-primary/3 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
-      </div>
-
+    <section className="py-8 relative">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
         {/* Section Header */}
         <div className="text-center mb-20">

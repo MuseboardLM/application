@@ -21,17 +21,7 @@ export default function HeroSection() {
   }, [words.length]);
 
   return (
-    <section className="relative py-12 flex items-center justify-center bg-background px-6 overflow-hidden">
-      {/* Subtle gradient overlay for depth */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10"></div>
-
-      {/* Animated background orbs */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/8 rounded-full blur-3xl animate-pulse glow-primary"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-primary/5 rounded-full blur-3xl animate-pulse glow-primary delay-1000"></div>
-        <div className="absolute top-1/2 right-1/3 w-64 h-64 bg-primary/3 rounded-full blur-2xl animate-pulse delay-2000"></div>
-      </div>
-
+    <section className="relative py-12 flex items-center justify-center px-6">
       <div className="relative text-center max-w-5xl mx-auto space-y-8 z-10">
         <div className="space-y-6">
           {/* HEADLINE */}
