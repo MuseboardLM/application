@@ -9,7 +9,7 @@ import NavLink from "./nav-link";
 const navLinks = [
   { href: "/", label: "Overview" },
   { href: "/#pricing", label: "Pricing" },
-  { href: "/sign-in", label: "Try MuseboardLM", isButton: true },
+  { href: "/sign-in", label: "Try MBLM", isButton: true },
 ];
 
 export default function Header() {
@@ -33,9 +33,7 @@ export default function Header() {
         >
           <span className="sr-only">MuseboardLM</span>
           <Crop className="h-6 w-6 text-primary hover:rotate-12 transition duration-200" />
-          <span className="font-bold text-2xl text-foreground">
-            MuseboardLM
-          </span>
+          <span className="font-bold text-2xl text-foreground">MBLM</span>
         </Link>
       </div>
 
@@ -77,14 +75,17 @@ export default function Header() {
         </button>
       </div>
 
-      {/* Mobile Menu Panel */}
+      {/* Mobile Menu Panel -- REFACTORED SECTION -- */}
       <div
         id="mobile-menu"
-        className={`absolute top-full left-0 w-full bg-card/95 backdrop-blur-xl border-t border-border/50 px-4 py-4 flex flex-col gap-4 md:hidden z-40 shadow-lg transition-all duration-200 ease-in-out ${
-          mobileMenuOpen
-            ? "opacity-100 translate-y-0 pointer-events-auto"
-            : "opacity-0 -translate-y-2 pointer-events-none"
-        }`}
+        className={`
+          absolute top-full left-0 w-full bg-card/95 backdrop-blur-xl border-t border-border/50 
+          px-4 py-4 flex flex-col gap-4 md:hidden z-40 shadow-lg 
+          transition-all duration-200 ease-in-out
+          ${mobileMenuOpen ? "opacity-100" : "opacity-0"}
+          ${mobileMenuOpen ? "translate-y-0" : "-translate-y-2"}
+          ${mobileMenuOpen ? "pointer-events-auto" : "pointer-events-none"}
+        `}
       >
         {navLinks.map((link) =>
           link.isButton ? (

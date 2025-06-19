@@ -35,32 +35,42 @@ export default function HeroSection() {
           {/* SUB-HEADLINE */}
           <h2 className="text-lg md:text-2xl text-muted-foreground font-light max-w-3xl mx-auto leading-relaxed">
             <div className="flex justify-center items-center">
-              <span>Keep your&nbsp;</span>
+              <span>Keep your </span>
               <div
                 className="relative inline-block overflow-hidden transition-all duration-700 ease-in-out"
                 style={{ width: words[currentWordIndex].width }}
               >
-                {words.map((wordObj, index) => (
-                  <span
-                    key={wordObj.text}
-                    className={`font-bold text-foreground transition-all duration-1000 ease-in-out whitespace-nowrap ${
-                      index === currentWordIndex
-                        ? "opacity-100 translate-y-0 relative"
-                        : index ===
-                          (currentWordIndex - 1 + words.length) % words.length
-                        ? "opacity-0 -translate-y-full absolute top-0 left-0"
-                        : "opacity-0 translate-y-full absolute top-0 left-0"
-                    }`}
-                    style={{
-                      transitionDelay:
-                        index === currentWordIndex ? "150ms" : "0ms",
-                    }}
-                  >
-                    {wordObj.text}
-                  </span>
-                ))}
+                {words.map((wordObj, index) => {
+                  const isCurrent = index === currentWordIndex;
+                  const isPrevious =
+                    index ===
+                    (currentWordIndex - 1 + words.length) % words.length;
+
+                  return (
+                    <span
+                      key={wordObj.text}
+                      className={`
+                        font-bold text-foreground transition-all duration-1000 ease-in-out whitespace-nowrap
+                        ${isCurrent ? "opacity-100" : "opacity-0"}
+                        ${isCurrent ? "relative" : "absolute top-0 left-0"}
+                        ${
+                          isCurrent
+                            ? "translate-y-0"
+                            : isPrevious
+                            ? "-translate-y-full"
+                            : "translate-y-full"
+                        }
+                      `}
+                      style={{
+                        transitionDelay: isCurrent ? "150ms" : "0ms",
+                      }}
+                    >
+                      {wordObj.text}
+                    </span>
+                  );
+                })}
               </div>
-              <span>&nbsp;front-of-mind.</span>
+              <span> front-of-mind.</span>
             </div>
             <div>All the time.</div>
           </h2>
@@ -72,7 +82,7 @@ export default function HeroSection() {
             variant={"link"}
             className="px-10 py-5 text-lg font-semibold rounded-xl"
           >
-            <Link href="sign-in">Try MuseboardLM</Link>
+            <Link href="sign-in">Try MBLM</Link>
           </Button>
         </div>
 
