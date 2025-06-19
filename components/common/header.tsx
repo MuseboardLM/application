@@ -24,7 +24,7 @@ export default function Header() {
   };
 
   return (
-    <header className="relative w-full flex items-center justify-between px-6 lg:px-8 py-6 bg-background border-b border-border/50">
+    <header className="relative w-full flex items-center justify-between px-6 lg:px-8 py-6 bg-background border-b border-border/50 z-50">
       <div className="flex-1">
         <Link
           href="/"
@@ -63,7 +63,7 @@ export default function Header() {
       <div className="flex flex-1 justify-end md:hidden">
         <button
           type="button"
-          className="-m-2.5 p-2.5 text-foreground hover:text-primary transition-colors"
+          className="-m-2.5 p-2.5 text-foreground hover:text-primary transition-colors z-50 relative"
           onClick={toggleMobileMenu}
           aria-controls="mobile-menu"
           aria-expanded={mobileMenuOpen}
@@ -78,35 +78,33 @@ export default function Header() {
       </div>
 
       {/* Mobile Menu Panel */}
-      {mobileMenuOpen && (
-        <div
-          id="mobile-menu"
-          className="absolute top-full left-0 w-full bg-card border-t border-border/50 px-4 py-4 flex flex-col gap-4 md:hidden backdrop-blur-xl"
-        >
-          {navLinks.map((link) =>
-            link.isButton ? (
-              <Button
-                key={link.href}
-                variant="white"
-                asChild
-                className="w-full px-6 py-3 rounded-xl text-base font-semibold"
-              >
-                <Link href={link.href} onClick={closeMobileMenu}>
-                  {link.label}
-                </Link>
-              </Button>
-            ) : (
-              <NavLink
-                key={link.href}
-                href={link.href}
-                onClick={closeMobileMenu}
-              >
+      <div
+        id="mobile-menu"
+        className={`absolute top-full left-0 w-full bg-card/95 backdrop-blur-xl border-t border-border/50 px-4 py-4 flex flex-col gap-4 md:hidden z-40 shadow-lg transition-all duration-200 ease-in-out ${
+          mobileMenuOpen
+            ? "opacity-100 translate-y-0 pointer-events-auto"
+            : "opacity-0 -translate-y-2 pointer-events-none"
+        }`}
+      >
+        {navLinks.map((link) =>
+          link.isButton ? (
+            <Button
+              key={link.href}
+              variant="white"
+              asChild
+              className="w-full px-6 py-3 rounded-xl text-base font-semibold"
+            >
+              <Link href={link.href} onClick={closeMobileMenu}>
                 {link.label}
-              </NavLink>
-            )
-          )}
-        </div>
-      )}
+              </Link>
+            </Button>
+          ) : (
+            <NavLink key={link.href} href={link.href} onClick={closeMobileMenu}>
+              {link.label}
+            </NavLink>
+          )
+        )}
+      </div>
     </header>
   );
 }

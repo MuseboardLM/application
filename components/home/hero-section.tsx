@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { useState, useEffect } from "react";
 
 export default function HeroSection() {
@@ -78,26 +79,26 @@ export default function HeroSection() {
         {/* CTA BUTTON */}
         <div className="pt-8 flex flex-col sm:flex-row gap-4 justify-center items-center">
           <Button
-            variant="white"
-            className="px-10 py-4 text-lg font-semibold rounded-xl"
+            variant={"link"}
+            className="px-10 py-5 text-lg font-semibold rounded-xl"
           >
-            Try MuseboardLM
+            <Link href="sign-in">Try MuseboardLM</Link>
           </Button>
         </div>
 
         {/* TRUST INDICATORS */}
-        <div className="pt-10 flex flex-wrap justify-center items-center gap-8 text-sm text-muted-foreground">
+        <div className="pb-16 flex flex-wrap justify-center items-center gap-8 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-primary rounded-full animate-pulse shadow-[0_0_8px_oklch(0.6_0.24_215/0.6)]"></div>
-            <span>Private</span>
+            <span>AI Powered</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-primary rounded-full animate-pulse delay-300 shadow-[0_0_8px_oklch(0.6_0.24_215/0.6)]"></div>
-            <span>Personal</span>
+            <span>Private</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-primary rounded-full animate-pulse delay-700 shadow-[0_0_8px_oklch(0.6_0.24_215/0.6)]"></div>
-            <span>Purposeful</span>
+            <span>Personal</span>
           </div>
         </div>
       </div>

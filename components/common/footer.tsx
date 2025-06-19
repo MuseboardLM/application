@@ -37,7 +37,7 @@ export default function Footer() {
           {/* Brand Section */}
           <div className="lg:col-span-2 space-y-6">
             <Link href="/" className="flex items-center gap-2">
-              <Crop className="h-8 w-8 text-primary" />
+              <Crop className="h-8 w-8 text-primary hover:rotate-12 transition duration-200" />
               <span className="font-bold text-2xl text-foreground">
                 MuseboardLM
               </span>
