@@ -70,7 +70,7 @@ export default function HeroSection() {
                   </span>
                 ))}
               </div>
-              <span>&nbsp;front of mind.</span>
+              <span>&nbsp;front-of-mind.</span>
             </div>
             <div>All the time.</div>
           </h2>
@@ -87,7 +87,7 @@ export default function HeroSection() {
         </div>
 
         {/* TRUST INDICATORS */}
-        <div className="pb-16 flex flex-wrap justify-center items-center gap-8 text-sm text-muted-foreground">
+        <div className="pb-4 flex flex-wrap justify-center items-center gap-8 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-primary rounded-full animate-pulse shadow-[0_0_8px_oklch(0.6_0.24_215/0.6)]"></div>
             <span>AI Powered</span>
