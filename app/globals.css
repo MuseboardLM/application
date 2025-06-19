@@ -1,8 +1,13 @@
+/* globals.css
+   =============================================================== */
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* ---------- Tailwind custom variant -------------------------------- */
 @custom-variant dark (&:is(.dark *));
 
+/* ---------- Tailwind CSS variables --------------------------------- */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -43,54 +48,52 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* ---------- Light theme tokens ------------------------------------ */
 :root {
   --radius: 0.625rem;
-  /* Rich black background similar to Scale.com */
-  --background: oklch(0.08 0 0); /* Very dark, almost black */
-  --foreground: oklch(0.98 0 0); /* Crisp white text */
-  --card: oklch(0.12 0 0); /* Slightly lighter black for cards */
+  --background: oklch(0.08 0 0);
+  --foreground: oklch(0.98 0 0);
+  --card: oklch(0.12 0 0);
   --card-foreground: oklch(0.98 0 0);
   --popover: oklch(0.1 0 0);
   --popover-foreground: oklch(0.98 0 0);
-  /* Premium Electric Blue - AI-centric and luminous */
-  --primary: oklch(0.65 0.25 230); /* Bright electric blue with high chroma */
-  --primary-foreground: oklch(0.05 0 0); /* Deep black text on bright primary */
-  --secondary: oklch(0.15 0 0); /* Dark gray */
+  --primary: oklch(1 0 0);
+  --primary-foreground: oklch(0.08 0 0);
+  --secondary: oklch(0.15 0 0);
   --secondary-foreground: oklch(0.9 0 0);
-  --muted: oklch(0.18 0 0); /* Muted dark gray */
-  --muted-foreground: oklch(0.65 0 0); /* Medium gray text */
-  --accent: oklch(0.16 0 0); /* Subtle accent background */
+  --muted: oklch(0.18 0 0);
+  --muted-foreground: oklch(0.65 0 0);
+  --accent: oklch(0.16 0 0);
   --accent-foreground: oklch(0.9 0 0);
-  --destructive: oklch(0.65 0.2 15); /* Red for errors */
-  --border: oklch(0.25 0 0); /* Subtle borders */
-  --input: oklch(0.15 0 0); /* Input backgrounds */
-  --ring: oklch(0.65 0.25 230); /* Focus rings match primary - electric blue */
-  --chart-1: oklch(0.65 0.25 230); /* Electric blue */
-  --chart-2: oklch(0.7 0.2 200); /* Cyan accent */
-  --chart-3: oklch(0.6 0.18 260); /* Purple-blue */
-  --chart-4: oklch(0.75 0.15 180); /* Bright cyan */
-  --chart-5: oklch(0.8 0.2 280); /* Violet accent */
+  --destructive: oklch(0.65 0.2 15);
+  --border: oklch(0.25 0 0);
+  --input: oklch(0.15 0 0);
+  --ring: oklch(1 0 0);
+  --chart-1: oklch(1 0 0);
+  --chart-2: oklch(0.85 0 0);
+  --chart-3: oklch(0.7 0 0);
+  --chart-4: oklch(0.55 0 0);
+  --chart-5: oklch(0.4 0 0);
   --sidebar: oklch(0.1 0 0);
   --sidebar-foreground: oklch(0.9 0 0);
-  --sidebar-primary: oklch(0.65 0.25 230); /* Electric blue */
-  --sidebar-primary-foreground: oklch(0.05 0 0);
+  --sidebar-primary: oklch(1 0 0);
+  --sidebar-primary-foreground: oklch(0.08 0 0);
   --sidebar-accent: oklch(0.15 0 0);
   --sidebar-accent-foreground: oklch(0.9 0 0);
   --sidebar-border: oklch(0.2 0 0);
-  --sidebar-ring: oklch(0.65 0.25 230); /* Electric blue */
+  --sidebar-ring: oklch(1 0 0);
 }
 
+/* ---------- Dark mode overrides ----------------------------------- */
 .dark {
-  /* Keep the same rich black theme for dark mode consistency */
-  --background: oklch(0.06 0 0); /* Even deeper black for explicit dark mode */
-  --foreground: oklch(1 0 0); /* Pure white text */
+  --background: oklch(0.06 0 0);
+  --foreground: oklch(1 0 0);
   --card: oklch(0.1 0 0);
   --card-foreground: oklch(1 0 0);
   --popover: oklch(0.08 0 0);
   --popover-foreground: oklch(1 0 0);
-  /* Even more luminous electric blue for dark mode */
-  --primary: oklch(0.7 0.28 225); /* Brighter, more saturated electric blue */
-  --primary-foreground: oklch(0.03 0 0); /* Almost pure black text */
+  --primary: oklch(1 0 0);
+  --primary-foreground: oklch(0.06 0 0);
   --secondary: oklch(0.12 0 0);
   --secondary-foreground: oklch(0.95 0 0);
   --muted: oklch(0.15 0 0);
@@ -100,52 +103,135 @@
   --destructive: oklch(0.7 0.25 15);
   --border: oklch(0.2 0 0);
   --input: oklch(0.12 0 0);
-  --ring: oklch(0.7 0.28 225); /* Bright electric blue focus ring */
-  --chart-1: oklch(0.7 0.28 225); /* Electric blue */
-  --chart-2: oklch(0.75 0.25 200); /* Bright cyan */
-  --chart-3: oklch(0.65 0.22 260); /* Purple-blue */
-  --chart-4: oklch(0.8 0.2 180); /* Luminous cyan */
-  --chart-5: oklch(0.85 0.25 280); /* Bright violet */
+  --ring: oklch(1 0 0);
+  --chart-1: oklch(1 0 0);
+  --chart-2: oklch(0.85 0 0);
+  --chart-3: oklch(0.7 0 0);
+  --chart-4: oklch(0.55 0 0);
+  --chart-5: oklch(0.4 0 0);
   --sidebar: oklch(0.08 0 0);
   --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.7 0.28 225); /* Electric blue */
-  --sidebar-primary-foreground: oklch(0.03 0 0);
+  --sidebar-primary: oklch(1 0 0);
+  --sidebar-primary-foreground: oklch(0.06 0 0);
   --sidebar-accent: oklch(0.12 0 0);
   --sidebar-accent-foreground: oklch(0.95 0 0);
   --sidebar-border: oklch(0.18 0 0);
-  --sidebar-ring: oklch(0.7 0.28 225); /* Electric blue */
+  --sidebar-ring: oklch(1 0 0);
 }
 
+/* ---------- Generic keyframes ------------------------------------- */
+@keyframes iridescent-shine {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* ---------- Base layer utilities ---------------------------------- */
 @layer base {
+  .glow-drop-shadow {
+    filter: drop-shadow(0 0 20px oklch(1 0 0 / 0.15));
+  }
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
-    /* Enhanced contrast and smoothness */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-
-  /* Enhanced selection styling with electric blue */
   ::selection {
-    background: oklch(0.7 0.28 225 / 0.4);
+    background: oklch(1 0 0 / 0.2);
     color: oklch(1 0 0);
   }
-
-  /* Smooth scrolling for better UX */
   html {
     scroll-behavior: smooth;
   }
 
-  /* Custom glow effects for premium feel */
   .glow-primary {
-    box-shadow: 0 0 20px oklch(0.7 0.28 225 / 0.3),
-      0 0 40px oklch(0.7 0.28 225 / 0.1);
+    box-shadow: 0 0 20px oklch(1 0 0 / 0.1), 0 0 40px oklch(1 0 0 / 0.05);
+  }
+  .glow-primary-strong {
+    box-shadow: 0 0 30px oklch(1 0 0 / 0.15), 0 0 60px oklch(1 0 0 / 0.08);
+  }
+  .text-glow {
+    text-shadow: 0 0 12px oklch(1 0 0 / 0.5);
   }
 
-  .glow-primary-strong {
-    box-shadow: 0 0 30px oklch(0.7 0.28 225 / 0.4),
-      0 0 60px oklch(0.7 0.28 225 / 0.2);
+  /* ================================================================
+     Electric-Iris — Hologram-Noise Overlay  (polished)
+     ================================================================ */
+  .text-iridescent {
+    --l: 88%;
+    --c: 0.5;
+
+    background: linear-gradient(
+      130deg,
+      oklch(var(--l) var(--c) 330),
+      oklch(var(--l) var(--c) 270),
+      oklch(var(--l) var(--c) 210)
+    );
+    background-size: 220% 220%;
+    animation: holo-slide 7s ease-in-out infinite alternate;
+    position: relative;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .text-iridescent::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: url("data:image/svg+xml,\
+      %3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E\
+        %3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4'/%3E%3C/filter%3E\
+        %3Crect width='20' height='20' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E")
+      repeat;
+    mix-blend-mode: soft-light;
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation: holo-noise 6s linear infinite;
+  }
+  @keyframes holo-slide {
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+  @keyframes holo-noise {
+    to {
+      transform: translateX(40px);
+    }
+  }
+
+  /* accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    .text-iridescent,
+    .text-iridescent::after {
+      animation: none !important;
+    }
+  }
+
+  /* ================================================================
+     Brand icon — quick stroke-flow on hover
+     ================================================================ */
+  @keyframes icon-flow {
+    from {
+      stroke-dashoffset: 110;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  /* runs only when a parent .group is hovered */
+  .group:hover .icon-iridescent path {
+    stroke-dasharray: 110;
+    stroke-dashoffset: 110;
+    animation: icon-flow 0.6s linear forwards;
   }
 }

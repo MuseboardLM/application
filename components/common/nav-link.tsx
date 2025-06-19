@@ -1,3 +1,5 @@
+// components/common/nav-link.tsx
+
 "use client";
 
 import Link from "next/link";
@@ -19,27 +21,21 @@ export default function NavLink({ href, children, onClick }: NavLinkProps) {
 
   useEffect(() => {
     setMounted(true);
-
-    // Set initial hash
     setCurrentHash(window.location.hash);
-
     const handleHashChange = () => {
       setCurrentHash(window.location.hash);
     };
-
     window.addEventListener("hashchange", handleHashChange);
-
     return () => {
       window.removeEventListener("hashchange", handleHashChange);
     };
   }, []);
 
-  // Don't render active state until mounted to avoid hydration mismatch
   if (!mounted) {
     return (
       <Link
         href={href}
-        className="relative transition hover:text-primary text-base font-medium py-2 block md:inline-block md:py-0 w-fit"
+        className="relative transition hover:text-primary text-base font-medium py-2 block md:inline-block md:py-0 w-fit text-muted-foreground"
         onClick={onClick}
       >
         {children}
@@ -51,28 +47,22 @@ export default function NavLink({ href, children, onClick }: NavLinkProps) {
   let isActive = false;
 
   if (linkHash) {
-    // Hash link like "/#pricing" - only active if both path and hash match
     const pathMatches = (linkPath || "/") === pathname;
     const hashMatches = currentHash === `#${linkHash}`;
     isActive = pathMatches && hashMatches;
   } else {
-    // Regular link
-    if (href === "/") {
-      // Root link is active when on root path with no hash OR when no current hash exists
-      isActive = pathname === "/" && (!currentHash || currentHash === "");
-    } else {
-      // Other links match exactly and no hash should be present
-      isActive = pathname === href && (!currentHash || currentHash === "");
-    }
+    isActive = pathname === href && (!currentHash || currentHash === "");
   }
 
   const classes = twMerge(
     clsx(
       "relative transition hover:text-primary text-base font-medium py-2 block md:inline-block md:py-0 w-fit",
-      "after:absolute after:left-0 after:-bottom-0 md:after:-bottom-0.5 after:h-px after:bg-gradient-to-r after:from-primary after:to-primary/80 after:transition-all after:duration-150 after:shadow-sm after:shadow-primary/30",
+      /* UPDATED: Changed after: element to use a white gradient and shadow */
+      "after:absolute after:left-0 after:-bottom-0 md:after:-bottom-0.5 after:h-px after:bg-gradient-to-r after:from-white after:to-white/80 after:transition-all after:duration-150 after:shadow-sm after:shadow-white/30",
       {
-        "text-primary after:w-full": isActive,
-        "after:w-0 hover:after:w-full": !isActive,
+        "text-primary after:w-full":
+          isActive /* This now correctly applies text-white */,
+        "text-muted-foreground after:w-0 hover:after:w-full": !isActive,
       }
     )
   );

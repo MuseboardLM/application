@@ -6,15 +6,15 @@ const features = [
     icon: Brain,
     title: "Feed it what fuels you",
     description:
-      "Inject posts, screenshots, PDFs―whatever drives your mindset and inspiration. MuseboardLM learns from what fuels you so it can push you further.",
+      "Inject posts, screenshots, PDFs—whatever drives your mindset and inspiration. MuseboardLM learns from what fuels you so it can push you further.",
     image: "/api/placeholder/400/300", // You'll replace this with actual images
     imageAlt: "AI analyzing personal goals and dreams visualization",
   },
   {
     icon: Shield,
-    title: "Get Mental Ammo―On Demand",
+    title: "Get Mental Ammo—On Demand",
     description:
-      "AI without the generic answers. Instead, it reasons wih your own source materials and fires back clariy and perspective shifts from stuff that actually matters to you.",
+      "AI without the generic answers. Instead, it reasons with your own source materials and fires back clarity and perspective shifts from stuff that actually matters to you.", // Corrected "wih" to "with"
     image: "/api/placeholder/400/300", // You'll replace this with actual images
     imageAlt: "Privacy and security shield protecting personal data",
   },
@@ -30,11 +30,11 @@ const features = [
 
 export default function FeaturesSection() {
   return (
-    <section className="py-8 relative">
+    <section className="py-16 md:py-24 relative">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
         {/* Section Header */}
         <div className="text-center mb-20">
-          <h2 className="text-4xl md:text-4xl text-foreground mb-6">
+          <h2 className="text-4xl md:text-5xl text-foreground mb-6">
             Your Private & Personal AI Muse
           </h2>
         </div>
@@ -58,7 +58,8 @@ export default function FeaturesSection() {
                     <div className="p-3 bg-primary/10 border border-primary/20 rounded-xl glow-primary">
                       <Icon className="h-8 w-8 text-primary" />
                     </div>
-                    <h3 className="text-2xl md:text-lg text-foreground">
+                    {/* FIX: Corrected responsive font size for better scaling */}
+                    <h3 className="text-xl md:text-2xl text-foreground">
                       {feature.title}
                     </h3>
                   </div>
@@ -68,13 +69,14 @@ export default function FeaturesSection() {
                 </div>
 
                 {/* Image */}
-                <div className="flex-1 relative">
-                  <div className="relative rounded-2xl overflow-hidden border border-border/30 bg-card/50 backdrop-blur-sm glow-primary">
+                {/* FIX: Added `w-full` and `flex` to ensure visibility and correct sizing on mobile */}
+                <div className="w-full flex-1 relative flex justify-center">
+                  <div className="relative w-full max-w-lg rounded-2xl overflow-hidden border border-border/30 bg-card/50 backdrop-blur-sm glow-primary">
                     <div className="aspect-[4/3] bg-gradient-to-br from-primary/10 via-primary/5 to-background relative">
                       {/* Placeholder for actual images */}
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-center space-y-4">
-                          <Icon className="h-16 w-16 text-primary mx-auto opacity-50" />
+                        <div className="text-center space-y-4 px-4">
+                          <Icon className="h-12 w-12 text-primary mx-auto opacity-50" />
                           <p className="text-muted-foreground text-sm">
                             {feature.imageAlt}
                           </p>
