@@ -1,4 +1,4 @@
-// components/common/nav-link.tsx
+// components/common/nav-link.tsx (Updated & Fixed)
 
 "use client";
 
@@ -8,13 +8,20 @@ import { useState, useEffect, ReactNode } from "react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+// 1. ADD `className` to the props type definition
 type NavLinkProps = {
   href: string;
   children: ReactNode;
   onClick?: () => void;
+  className?: string; // <-- ADDED: Allows passing custom classes
 };
 
-export default function NavLink({ href, children, onClick }: NavLinkProps) {
+export default function NavLink({
+  href,
+  children,
+  onClick,
+  className, // <-- ADDED: Destructure the new prop
+}: NavLinkProps) {
   const pathname = usePathname();
   const [currentHash, setCurrentHash] = useState("");
   const [mounted, setMounted] = useState(false);
@@ -31,11 +38,16 @@ export default function NavLink({ href, children, onClick }: NavLinkProps) {
     };
   }, []);
 
+  // This block handles the pre-hydration state on the client
   if (!mounted) {
     return (
       <Link
         href={href}
-        className="relative transition hover:text-primary text-base font-medium py-2 block md:inline-block md:py-0 w-fit text-muted-foreground"
+        // 2. APPLY `className` in the SSR fallback as well
+        className={twMerge(
+          "relative transition hover:text-primary text-base font-medium py-2 block md:inline-block md:py-0 w-fit text-muted-foreground",
+          className
+        )}
         onClick={onClick}
       >
         {children}
@@ -57,13 +69,12 @@ export default function NavLink({ href, children, onClick }: NavLinkProps) {
   const classes = twMerge(
     clsx(
       "relative transition hover:text-primary text-base font-medium py-2 block md:inline-block md:py-0 w-fit",
-      /* UPDATED: Changed after: element to use a white gradient and shadow */
       "after:absolute after:left-0 after:-bottom-0 md:after:-bottom-0.5 after:h-px after:bg-gradient-to-r after:from-white after:to-white/80 after:transition-all after:duration-150 after:shadow-sm after:shadow-white/30",
       {
-        "text-primary after:w-full":
-          isActive /* This now correctly applies text-white */,
+        "text-primary after:w-full": isActive,
         "text-muted-foreground after:w-0 hover:after:w-full": !isActive,
-      }
+      },
+      className // <-- 3. APPLY `className` here to merge it with the other classes
     )
   );
 
