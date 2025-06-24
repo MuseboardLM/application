@@ -30,7 +30,7 @@ export default function HeroSection() {
         {/* HEADLINE                                                        */}
         {/* ---------------------------------------------------------------- */}
         <h1 className="text-5xl md:text-7xl font-bold leading-tight tracking-tight">
-          <span className="text-iridescent">Re-Shape</span>
+          <span className="text-iridescent">Re-Engineer</span>
           <span className="block text-foreground">Your Thinking</span>
         </h1>
 
@@ -38,6 +38,7 @@ export default function HeroSection() {
         {/* SUB-HEADLINE                                                    */}
         {/* ---------------------------------------------------------------- */}
         <h2 className="text-lg md:text-2xl text-muted-foreground font-light max-w-3xl mx-auto leading-relaxed">
+        <span className="italic">Capture, organize, and reconnect with ideas that fuel you.</span>
           <div className="flex justify-center items-center">
             <span>Keep your&nbsp;</span>
 
@@ -76,9 +77,9 @@ export default function HeroSection() {
               })}
             </div>
 
-            <span>&nbsp;front-of-mind.</span>
+            <span>&nbsp;front-of-mind. All the time.</span>
           </div>
-          <div>All the time.</div>
+          
         </h2>
 
         {/* ---------------------------------------------------------------- */}
