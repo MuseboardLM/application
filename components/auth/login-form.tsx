@@ -37,8 +37,10 @@ export function LoginForm() {
     if (error) {
       setError(error.message);
     } else {
-      // On successful login, redirect the user to the dashboard.
-      router.push("/dashboard"); // <-- UPDATED
+      // On successful login, redirect the user to the Museboard.
+      // --- CHANGE BELOW ---
+      router.push("/museboard"); 
+      // --- CHANGE ABOVE ---
       router.refresh(); // Important to refresh to re-fetch server component data
     }
   };
@@ -52,7 +54,7 @@ export function LoginForm() {
             htmlFor="email"
             className="text-sm font-medium text-muted-foreground"
           >
-            Username or Email
+            Email
           </label>
           <Input
             id="email"

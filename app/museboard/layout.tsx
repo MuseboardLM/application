@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { createServer } from "@/lib/supabase/server";
 
-export default async function DashboardLayout({
+export default async function MuseboardLayout({
   children,
 }: {
   children: React.ReactNode;

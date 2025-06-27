@@ -43,11 +43,11 @@ export default function HeaderClient({ user, logOut }: HeaderClientProps) {
     { href: "/sign-in", label: "Try MBLM", isButton: true },
   ];
 
-  // --- THIS IS THE CHANGE ---
-  // We've removed the "Overview" and "Pricing" links for logged-in users
-  // to create a more focused application experience.
   const loggedInLinks: NavLinkType[] = [
-    { href: "/dashboard", label: "Dashboard" },
+    // --- CHANGE BELOW ---
+    { href: "/museboard", label: "Museboard" },
+    { href: "/museboard/account", label: "Account" },
+    // --- CHANGE ABOVE ---
   ];
 
   const navLinks = user ? loggedInLinks : loggedOutLinks;

@@ -31,9 +31,11 @@ export function UpdatePasswordForm() {
       setMessage(error.message);
     } else {
       setMessage("Your password has been updated successfully.");
-      // Redirect to dashboard after a short delay
+      // Redirect to Museboard after a short delay
       setTimeout(() => {
-        router.push("/dashboard"); // <-- UPDATED
+        // --- CHANGE BELOW ---
+        router.push("/museboard"); 
+        // --- CHANGE ABOVE ---
       }, 2000);
     }
   };

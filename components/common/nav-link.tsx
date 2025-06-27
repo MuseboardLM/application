@@ -1,4 +1,4 @@
-// components/common/nav-link.tsx (Updated & Fixed)
+// components/common/nav-link.tsx 
 
 "use client";
 
@@ -8,19 +8,18 @@ import { useState, useEffect, ReactNode } from "react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-// 1. ADD `className` to the props type definition
 type NavLinkProps = {
   href: string;
   children: ReactNode;
   onClick?: () => void;
-  className?: string; // <-- ADDED: Allows passing custom classes
+  className?: string; 
 };
 
 export default function NavLink({
   href,
   children,
   onClick,
-  className, // <-- ADDED: Destructure the new prop
+  className, 
 }: NavLinkProps) {
   const pathname = usePathname();
   const [currentHash, setCurrentHash] = useState("");
@@ -43,7 +42,6 @@ export default function NavLink({
     return (
       <Link
         href={href}
-        // 2. APPLY `className` in the SSR fallback as well
         className={twMerge(
           "relative transition hover:text-primary text-base font-medium py-2 block md:inline-block md:py-0 w-fit text-muted-foreground",
           className
@@ -74,7 +72,7 @@ export default function NavLink({
         "text-primary after:w-full": isActive,
         "text-muted-foreground after:w-0 hover:after:w-full": !isActive,
       },
-      className // <-- 3. APPLY `className` here to merge it with the other classes
+      className 
     )
   );
 

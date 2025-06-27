@@ -8,7 +8,9 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
   // if "next" is in param, use it as the redirect URL
-  const next = searchParams.get("next") ?? "/dashboard"; // <-- UPDATED
+  // --- CHANGE BELOW ---
+  const next = searchParams.get("next") ?? "/museboard"; 
+  // --- CHANGE ABOVE ---
 
   if (code) {
     // Use the purpose-built client for Route Handlers

@@ -1,7 +1,8 @@
 // components/auth/auth-card.tsx
 
 import Link from "next/link";
-import { Apple } from "lucide-react";
+// The 'Apple' icon is no longer needed, so we can remove its import.
+// import { Apple } from "lucide-react";
 
 import { CardContainer } from "@/components/ui/card-container";
 import { Button } from "@/components/ui/button";
@@ -60,13 +61,10 @@ export function AuthCard({
               <GoogleIcon className="mr-2 h-5 w-5" />
               Log in with Google
             </Button>
-            <Button variant="secondary" className="w-full">
-              <Apple className="mr-2 h-5 w-5" />
-              Log in with Apple
-            </Button>
-            <Button variant="secondary" className="w-full">
-              Use Single Sign-On (SSO)
-            </Button>
+            
+            {/* --- BUTTONS REMOVED --- */}
+            {/* The "Log in with Apple" and "Use Single Sign-On (SSO)" buttons have been removed. */}
+            
           </div>
         </>
       )}

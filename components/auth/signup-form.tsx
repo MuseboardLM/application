@@ -3,16 +3,17 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation"; // Use 'next/navigation' in App Router
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2 } from "lucide-react"; // For loading spinner
+import { Loader2 } from "lucide-react";
 
 export function SignUpForm() {
   // State for form inputs
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState(""); 
 
   // State for loading and error messages
   const [isLoading, setIsLoading] = useState(false);
@@ -30,8 +31,9 @@ export function SignUpForm() {
       email,
       password,
       options: {
-        // This is a crucial step for the user flow.
-        // It tells Supabase where to redirect the user after they confirm their email.
+        data: {
+          full_name: fullName,
+        },
         emailRedirectTo: `${location.origin}/auth/callback`,
       },
     });
@@ -41,17 +43,33 @@ export function SignUpForm() {
     if (error) {
       setError(error.message);
     } else {
-      // By default, Supabase sends a confirmation email.
-      // You can inform the user that they need to check their inbox.
-      // A common practice is to redirect to a "check your email" page.
-      // For now, we'll just refresh to show we can handle the success state.
-      setError("Please check your email to confirm your sign-up."); // Using error state for success message for simplicity
+      setError("Please check your email to confirm your sign-up.");
       router.refresh();
     }
   };
 
   return (
     <form onSubmit={handleSignUp} className="space-y-4">
+      {/* --- ADDED FULL NAME FIELD --- */}
+      <div className="space-y-2">
+        <label
+          htmlFor="fullName"
+          className="text-sm font-medium text-muted-foreground"
+        >
+          Full Name
+        </label>
+        <Input
+          id="fullName"
+          type="text"
+          placeholder="John Doe"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          required
+          disabled={isLoading}
+        />
+      </div>
+      {/* ----------------------------- */}
+
       <div className="space-y-2">
         <label
           htmlFor="email"
@@ -66,7 +84,7 @@ export function SignUpForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          disabled={isLoading} // Disable input when loading
+          disabled={isLoading}
         />
       </div>
       <div className="space-y-2">
@@ -82,11 +100,10 @@ export function SignUpForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          disabled={isLoading} // Disable input when loading
+          disabled={isLoading}
         />
       </div>
 
-      {/* Display error message if it exists */}
       {error && (
         <p className="text-sm text-red-500 bg-red-500/10 p-2 rounded-md">
           {error}
@@ -95,9 +112,9 @@ export function SignUpForm() {
 
       <Button
         type="submit"
-        className="w-full !mt-6 cursor-pointer" // <-- UPDATED
+        className="w-full !mt-6 cursor-pointer"
         size="lg"
-        disabled={isLoading} // Disable button when loading
+        disabled={isLoading}
       >
         {isLoading ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
