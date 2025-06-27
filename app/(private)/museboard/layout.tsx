@@ -1,7 +1,8 @@
-// app/dashboard/layout.tsx
+// app/(private)/museboard/layout.tsx
 
 import { redirect } from "next/navigation";
 import { createServer } from "@/lib/supabase/server";
+import Header from "@/components/common/header"; // Import the Header component
 
 export default async function MuseboardLayout({
   children,
@@ -19,6 +20,12 @@ export default async function MuseboardLayout({
     redirect("/sign-in");
   }
 
-  // If the user is logged in, render the children (the dashboard page)
-  return <>{children}</>;
+  // Render the main page structure for authenticated users.
+  // This includes the Header and a 'main' content area but excludes the Footer.
+  return (
+    <div className="relative flex min-h-screen flex-col">
+      <Header />
+      <main className="flex-1">{children}</main>
+    </div>
+  );
 }

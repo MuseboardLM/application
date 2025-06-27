@@ -1,16 +1,33 @@
 // components/common/header.tsx
 
-import { createServer } from "@/lib/supabase/server"; // Our server component client
-import { logOut } from "@/app/auth/actions/actions"; // Our logout server action
-import HeaderClient from "./header-client"; // The new client component
+import { createServer } from "@/lib/supabase/server";
+import { logOut } from "@/app/auth/actions/actions";
+import HeaderClient from "./header-client";
+
+// Define a type for the profile data for better type safety
+type Profile = {
+  full_name: string | null;
+  avatar_url: string | null;
+} | null;
 
 export default async function Header() {
-  // 1. Fetch the user session on the server
   const supabase = createServer();
+  let profile: Profile = null;
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // 2. Pass user data and server action to the client component
-  return <HeaderClient user={user} logOut={logOut} />;
+  // If a user is logged in, fetch their profile
+  if (user) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("full_name, avatar_url")
+      .eq("id", user.id)
+      .single();
+    profile = data;
+  }
+
+  // Pass user, profile, and the logout action to the client component
+  return <HeaderClient user={user} profile={profile} logOut={logOut} />;
 }

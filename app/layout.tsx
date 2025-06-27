@@ -3,9 +3,8 @@
 import type { Metadata } from "next";
 import { Source_Sans_3 as FontSans } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/common/header";
-import Footer from "@/components/common/footer";
-import AnimatedBackground from "@/components/common/animated-background"; // <-- IMPORT
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner"; // Make sure the Toaster is here
 
 const fontSans = FontSans({
   variable: "--font-sans",
@@ -14,7 +13,7 @@ const fontSans = FontSans({
 });
 
 export const metadata: Metadata = {
-  title: "MBLM - Re-shape your thinking.", // I took the liberty of using your logo name
+  title: "MBLM - Re-shape your thinking.",
   description:
     "Keep your mission, dreams, and goals front of mind. All the time.",
 };
@@ -25,17 +24,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${fontSans.variable} font-sans antialiased bg-background text-foreground`}
       >
-        <div className="relative flex min-h-screen flex-col">
-          {/* REMOVED aurora-background class, as our new component handles it */}
-          <AnimatedBackground /> {/* <-- ADDED a-background */}
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </div>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <Toaster position="top-center" richColors />
+        </ThemeProvider>
       </body>
     </html>
   );

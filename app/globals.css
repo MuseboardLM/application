@@ -1,237 +1,239 @@
 /* globals.css
    =============================================================== */
 
-@import "tailwindcss";
-@import "tw-animate-css";
-
-/* ---------- Tailwind custom variant -------------------------------- */
-@custom-variant dark (&:is(.dark *));
-
-/* ---------- Tailwind CSS variables --------------------------------- */
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-}
-
-/* ---------- Light theme tokens ------------------------------------ */
-:root {
-  --radius: 0.625rem;
-  --background: oklch(0.08 0 0);
-  --foreground: oklch(0.98 0 0);
-  --card: oklch(0.12 0 0);
-  --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.1 0 0);
-  --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(1 0 0);
-  --primary-foreground: oklch(0.08 0 0);
-  --secondary: oklch(0.15 0 0);
-  --secondary-foreground: oklch(0.9 0 0);
-  --muted: oklch(0.18 0 0);
-  --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.16 0 0);
-  --accent-foreground: oklch(0.9 0 0);
-  --destructive: oklch(0.65 0.2 15);
-  --border: oklch(0.25 0 0);
-  --input: oklch(0.15 0 0);
-  --ring: oklch(1 0 0);
-  --chart-1: oklch(1 0 0);
-  --chart-2: oklch(0.85 0 0);
-  --chart-3: oklch(0.7 0 0);
-  --chart-4: oklch(0.55 0 0);
-  --chart-5: oklch(0.4 0 0);
-  --sidebar: oklch(0.1 0 0);
-  --sidebar-foreground: oklch(0.9 0 0);
-  --sidebar-primary: oklch(1 0 0);
-  --sidebar-primary-foreground: oklch(0.08 0 0);
-  --sidebar-accent: oklch(0.15 0 0);
-  --sidebar-accent-foreground: oklch(0.9 0 0);
-  --sidebar-border: oklch(0.2 0 0);
-  --sidebar-ring: oklch(1 0 0);
-}
-
-/* ---------- Dark mode overrides ----------------------------------- */
-.dark {
-  --background: oklch(0.06 0 0);
-  --foreground: oklch(1 0 0);
-  --card: oklch(0.1 0 0);
-  --card-foreground: oklch(1 0 0);
-  --popover: oklch(0.08 0 0);
-  --popover-foreground: oklch(1 0 0);
-  --primary: oklch(1 0 0);
-  --primary-foreground: oklch(0.06 0 0);
-  --secondary: oklch(0.12 0 0);
-  --secondary-foreground: oklch(0.95 0 0);
-  --muted: oklch(0.15 0 0);
-  --muted-foreground: oklch(0.7 0 0);
-  --accent: oklch(0.14 0 0);
-  --accent-foreground: oklch(0.95 0 0);
-  --destructive: oklch(0.7 0.25 15);
-  --border: oklch(0.2 0 0);
-  --input: oklch(0.12 0 0);
-  --ring: oklch(1 0 0);
-  --chart-1: oklch(1 0 0);
-  --chart-2: oklch(0.85 0 0);
-  --chart-3: oklch(0.7 0 0);
-  --chart-4: oklch(0.55 0 0);
-  --chart-5: oklch(0.4 0 0);
-  --sidebar: oklch(0.08 0 0);
-  --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(1 0 0);
-  --sidebar-primary-foreground: oklch(0.06 0 0);
-  --sidebar-accent: oklch(0.12 0 0);
-  --sidebar-accent-foreground: oklch(0.95 0 0);
-  --sidebar-border: oklch(0.18 0 0);
-  --sidebar-ring: oklch(1 0 0);
-}
-
-/* ---------- Generic keyframes ------------------------------------- */
-@keyframes iridescent-shine {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-/* ---------- Base layer utilities ---------------------------------- */
-@layer base {
-  .glow-drop-shadow {
-    filter: drop-shadow(0 0 20px oklch(1 0 0 / 0.15));
-  }
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-  ::selection {
-    background: oklch(1 0 0 / 0.2);
-    color: oklch(1 0 0);
-  }
-  html {
-    scroll-behavior: smooth;
-  }
-
-  .glow-primary {
-    box-shadow: 0 0 20px oklch(1 0 0 / 0.1), 0 0 40px oklch(1 0 0 / 0.05);
-  }
-  .glow-primary-strong {
-    box-shadow: 0 0 30px oklch(1 0 0 / 0.15), 0 0 60px oklch(1 0 0 / 0.08);
-  }
-  .text-glow {
-    text-shadow: 0 0 12px oklch(1 0 0 / 0.5);
-  }
-
-  /* ================================================================
-     Electric-Iris — Hologram-Noise Overlay  (polished)
-     ================================================================ */
-  .text-iridescent {
-    --l: 88%;
-    --c: 0.5;
-
-    background: linear-gradient(
-      130deg,
-      oklch(var(--l) var(--c) 330),
-      oklch(var(--l) var(--c) 270),
-      oklch(var(--l) var(--c) 210)
-    );
-    background-size: 220% 220%;
-    animation: holo-slide 7s ease-in-out infinite alternate;
-    position: relative;
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-  .text-iridescent::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: url("data:image/svg+xml,\
-      %3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E\
-        %3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4'/%3E%3C/filter%3E\
-        %3Crect width='20' height='20' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E")
-      repeat;
-    mix-blend-mode: soft-light;
-    -webkit-background-clip: text;
-    background-clip: text;
-    animation: holo-noise 6s linear infinite;
-  }
-  @keyframes holo-slide {
-    50% {
-      background-position: 100% 50%;
-    }
-  }
-  @keyframes holo-noise {
-    to {
-      transform: translateX(40px);
-    }
-  }
-
-  /* accessibility */
-  @media (prefers-reduced-motion: reduce) {
-    .text-iridescent,
-    .text-iridescent::after {
-      animation: none !important;
-    }
-  }
-
-  /* ================================================================
-     Brand icon — quick stroke-flow on hover
-     ================================================================ */
-  @keyframes icon-flow {
-    from {
-      stroke-dashoffset: 110;
-    }
-    to {
-      stroke-dashoffset: 0;
-    }
-  }
-  /* runs only when a parent .group is hovered */
-  .group:hover .icon-iridescent path {
-    stroke-dasharray: 110;
-    stroke-dashoffset: 110;
-    animation: icon-flow 0.6s linear forwards;
-  }
-}
+   @import "tailwindcss";
+   @import "tw-animate-css";
+   
+   /* ---------- Tailwind custom variant -------------------------------- */
+   @custom-variant dark (&:is(.dark *));
+   
+   /* ---------- Tailwind CSS variables --------------------------------- */
+   @theme inline {
+     --color-background: var(--background);
+     --color-foreground: var(--foreground);
+     --font-sans: var(--font-geist-sans);
+     --font-mono: var(--font-geist-mono);
+     --color-sidebar-ring: var(--sidebar-ring);
+     --color-sidebar-border: var(--sidebar-border);
+     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+     --color-sidebar-accent: var(--sidebar-accent);
+     --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+     --color-sidebar-primary: var(--sidebar-primary);
+     --color-sidebar-foreground: var(--sidebar-foreground);
+     --color-sidebar: var(--sidebar);
+     --color-chart-5: var(--chart-5);
+     --color-chart-4: var(--chart-4);
+     --color-chart-3: var(--chart-3);
+     --color-chart-2: var(--chart-2);
+     --color-chart-1: var(--chart-1);
+     --color-ring: var(--ring);
+     --color-input: var(--input);
+     --color-border: var(--border);
+     --color-destructive: var(--destructive);
+     --color-accent-foreground: var(--accent-foreground);
+     --color-accent: var(--accent);
+     --color-muted-foreground: var(--muted-foreground);
+     --color-muted: var(--muted);
+     --color-secondary-foreground: var(--secondary-foreground);
+     --color-secondary: var(--secondary);
+     --color-primary-foreground: var(--primary-foreground);
+     --color-primary: var(--primary);
+     --color-popover-foreground: var(--popover-foreground);
+     --color-popover: var(--popover);
+     --color-card-foreground: var(--card-foreground);
+     --color-card: var(--card);
+     --radius-sm: calc(var(--radius) - 4px);
+     --radius-md: calc(var(--radius) - 2px);
+     --radius-lg: var(--radius);
+     --radius-xl: calc(var(--radius) + 4px);
+   }
+   
+   /* ---------- Light theme tokens ------------------------------------ */
+   :root {
+     --radius: 0.625rem;
+     --background: oklch(1 0 0); /* White background */
+     --foreground: oklch(0.06 0 0); /* Black text */
+     --card: oklch(1 0 0);
+     --card-foreground: oklch(0.06 0 0);
+     --popover: oklch(1 0 0);
+     --popover-foreground: oklch(0.06 0 0);
+     --primary: oklch(0.06 0 0); /* Black primary for text/buttons */
+     --primary-foreground: oklch(1 0 0); /* White foreground for primary */
+     --secondary: oklch(0.95 0 0);
+     --secondary-foreground: oklch(0.1 0 0);
+     --muted: oklch(0.95 0 0);
+     --muted-foreground: oklch(0.4 0 0);
+     --accent: oklch(0.95 0 0);
+     --accent-foreground: oklch(0.1 0 0);
+     --destructive: oklch(0.65 0.2 15);
+     --border: oklch(0.9 0 0);
+     --input: oklch(0.9 0 0);
+     --ring: oklch(0.06 0 0);
+     --chart-1: oklch(0.08 0 0);
+     --chart-2: oklch(0.25 0 0);
+     --chart-3: oklch(0.4 0 0);
+     --chart-4: oklch(0.55 0 0);
+     --chart-5: oklch(0.7 0 0);
+     --sidebar: oklch(0.98 0 0);
+     --sidebar-foreground: oklch(0.1 0 0);
+     --sidebar-primary: oklch(0.06 0 0);
+     --sidebar-primary-foreground: oklch(1 0 0);
+     --sidebar-accent: oklch(0.9 0 0);
+     --sidebar-accent-foreground: oklch(0.1 0 0);
+     --sidebar-border: oklch(0.85 0 0);
+     --sidebar-ring: oklch(0.06 0 0);
+     --glow: oklch(0.06 0 0 / 0.1);
+   }
+   
+   /* ---------- Dark mode overrides ----------------------------------- */
+   .dark {
+     --background: oklch(0.06 0 0);
+     --foreground: oklch(1 0 0);
+     --card: oklch(0.1 0 0);
+     --card-foreground: oklch(1 0 0);
+     --popover: oklch(0.08 0 0);
+     --popover-foreground: oklch(1 0 0);
+     --primary: oklch(1 0 0);
+     --primary-foreground: oklch(0.06 0 0);
+     --secondary: oklch(0.12 0 0);
+     --secondary-foreground: oklch(0.95 0 0);
+     --muted: oklch(0.15 0 0);
+     --muted-foreground: oklch(0.7 0 0);
+     --accent: oklch(0.14 0 0);
+     --accent-foreground: oklch(0.95 0 0);
+     --destructive: oklch(0.7 0.25 15);
+     --border: oklch(0.2 0 0);
+     --input: oklch(0.12 0 0);
+     --ring: oklch(1 0 0);
+     --chart-1: oklch(1 0 0);
+     --chart-2: oklch(0.85 0 0);
+     --chart-3: oklch(0.7 0 0);
+     --chart-4: oklch(0.55 0 0);
+     --chart-5: oklch(0.4 0 0);
+     --sidebar: oklch(0.08 0 0);
+     --sidebar-foreground: oklch(0.95 0 0);
+     --sidebar-primary: oklch(1 0 0);
+     --sidebar-primary-foreground: oklch(0.06 0 0);
+     --sidebar-accent: oklch(0.12 0 0);
+     --sidebar-accent-foreground: oklch(0.95 0 0);
+     --sidebar-border: oklch(0.18 0 0);
+     --sidebar-ring: oklch(1 0 0);
+     --glow: oklch(1 0 0 / 0.2);
+   }
+   
+   /* ---------- Generic keyframes ------------------------------------- */
+   @keyframes iridescent-shine {
+     0% {
+       background-position: 0% 50%;
+     }
+     50% {
+       background-position: 100% 50%;
+     }
+     100% {
+       background-position: 0% 50%;
+     }
+   }
+   
+   /* ---------- Base layer utilities ---------------------------------- */
+   @layer base {
+     .glow-drop-shadow {
+       filter: drop-shadow(0 0 20px var(--glow));
+     }
+     * {
+       @apply border-border outline-ring/50;
+     }
+     body {
+       @apply bg-background text-foreground;
+       -webkit-font-smoothing: antialiased;
+       -moz-osx-font-smoothing: grayscale;
+     }
+     ::selection {
+       background: oklch(1 0 0 / 0.2);
+       color: oklch(1 0 0);
+     }
+     html {
+       scroll-behavior: smooth;
+     }
+   
+     .glow-primary {
+       box-shadow: 0 0 20px oklch(1 0 0 / 0.1), 0 0 40px oklch(1 0 0 / 0.05);
+     }
+     .glow-primary-strong {
+       box-shadow: 0 0 30px oklch(1 0 0 / 0.15), 0 0 60px oklch(1 0 0 / 0.08);
+     }
+     .text-glow {
+       text-shadow: 0 0 12px oklch(1 0 0 / 0.5);
+     }
+   
+     /* ================================================================
+        Electric-Iris — Hologram-Noise Overlay  (polished)
+        ================================================================ */
+     .text-iridescent {
+       --l: 88%;
+       --c: 0.5;
+   
+       background: linear-gradient(
+         130deg,
+         oklch(var(--l) var(--c) 330),
+         oklch(var(--l) var(--c) 270),
+         oklch(var(--l) var(--c) 210)
+       );
+       background-size: 220% 220%;
+       animation: holo-slide 7s ease-in-out infinite alternate;
+       position: relative;
+       -webkit-background-clip: text;
+       background-clip: text;
+       color: transparent;
+     }
+     .text-iridescent::after {
+       content: "";
+       position: absolute;
+       inset: 0;
+       pointer-events: none;
+       background: url("data:image/svg+xml,\
+         %3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E\
+           %3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4'/%3E%3C/filter%3E\
+           %3Crect width='20' height='20' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E")
+         repeat;
+       mix-blend-mode: soft-light;
+       -webkit-background-clip: text;
+       background-clip: text;
+       animation: holo-noise 6s linear infinite;
+     }
+     @keyframes holo-slide {
+       50% {
+         background-position: 100% 50%;
+       }
+     }
+     @keyframes holo-noise {
+       to {
+         transform: translateX(40px);
+       }
+     }
+   
+     /* accessibility */
+     @media (prefers-reduced-motion: reduce) {
+       .text-iridescent,
+       .text-iridescent::after {
+         animation: none !important;
+       }
+     }
+   
+     /* ================================================================
+        Brand icon — quick stroke-flow on hover
+        ================================================================ */
+     @keyframes icon-flow {
+       from {
+         stroke-dashoffset: 110;
+       }
+       to {
+         stroke-dashoffset: 0;
+       }
+     }
+     /* runs only when a parent .group is hovered */
+     .group:hover .icon-iridescent path {
+       stroke-dasharray: 110;
+       stroke-dashoffset: 110;
+       animation: icon-flow 0.6s linear forwards;
+     }
+   }
