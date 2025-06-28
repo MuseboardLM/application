@@ -134,6 +134,19 @@
      }
    }
    
+   /* Keyframe for the subtle floating card animation we added */
+   @keyframes float {
+     0% {
+       transform: translateY(-2px);
+     }
+     50% {
+       transform: translateY(2px);
+     }
+     100% {
+       transform: translateY(-2px);
+     }
+   }
+   
    /* ---------- Base layer utilities ---------------------------------- */
    @layer base {
      .glow-drop-shadow {
@@ -164,6 +177,18 @@
      .text-glow {
        text-shadow: 0 0 12px oklch(1 0 0 / 0.5);
      }
+
+     /* --- ADD THIS SECTION --- */
+     /* Utility for adding a glow effect to cards on hover */
+     .card-glow-on-hover {
+       /* Apply a smooth transition to the shadow property */
+       @apply transition-shadow duration-300 ease-in-out;
+     }
+     .card-glow-on-hover:hover {
+       /* On hover, apply a white glow using the existing --glow variable */
+       box-shadow: 0 0 25px var(--glow);
+     }
+     /* --- END OF ADDED SECTION --- */
    
      /* ================================================================
         Electric-Iris — Hologram-Noise Overlay  (polished)
@@ -236,4 +261,9 @@
        stroke-dashoffset: 110;
        animation: icon-flow 0.6s linear forwards;
      }
+
+     /* Hide Next.js dev tools badge */
+[data-nextjs-badge-root] {
+  display: none !important;
+}
    }

@@ -1,4 +1,5 @@
 // components/museboard/MuseboardClientWrapper.tsx
+
 "use client";
 
 import { useState, useCallback } from "react";
@@ -10,7 +11,6 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { UploadCloudIcon } from "lucide-react";
-// --- ADDED ---
 import MuseboardFAB from "./MuseboardFAB";
 import PasteLinkModal from "./PasteLinkModal";
 
@@ -24,13 +24,11 @@ export default function MuseboardClientWrapper({
   user,
 }: MuseboardClientWrapperProps) {
   const [museItems, setMuseItems] = useState<MuseItem[]>(initialMuseItems);
-  // --- ADDED --- New state for the paste link modal
   const [isPasteLinkModalOpen, setIsPasteLinkModalOpen] = useState(false);
   const supabase = createClient();
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
-      // (This entire onDrop function remains exactly the same as before)
       if (!acceptedFiles.length) return;
       const file = acceptedFiles[0];
       const fileExtension = file.name.split('.').pop();
@@ -59,17 +57,14 @@ export default function MuseboardClientWrapper({
     [user.id, supabase]
   );
 
-  // The 'open' function programmatically triggers the file selection dialog
   const { getRootProps, getInputProps, isDragActive, open: openFileDialog } = useDropzone({
     onDrop,
     accept: { 'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'] },
-    noClick: true, // We trigger this manually now
+    noClick: true,
   });
 
-  // This single handler now works for items added via drop, upload, or paste
   const handleItemAdded = (newItem: MuseItem) => {
     setMuseItems((prevItems) => [newItem, ...prevItems]);
-    // Close the paste link modal if it was open
     setIsPasteLinkModalOpen(false); 
   };
 
@@ -77,9 +72,6 @@ export default function MuseboardClientWrapper({
     <div {...getRootProps()} className="relative min-h-full flex-grow flex flex-col">
       <input {...getInputProps()} />
 
-      {/* --- REMOVED --- The old header with H1 and Dialog has been deleted. */}
-
-      {/* Grid or Empty State */}
       <div className="flex-grow pt-8">
         {museItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted bg-muted/20 py-20 text-center">
@@ -91,15 +83,31 @@ export default function MuseboardClientWrapper({
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {museItems.map((item) => (
-              <MuseItemCard key={item.id} item={item} />
+          // --- THIS IS THE KEY CHANGE ---
+          // We've replaced the `grid` with a responsive, multi-column layout.
+          // This creates the masonry effect automatically.
+          <div
+            className="w-full"
+            style={{
+              columnCount: 1,
+              columnGap: '1rem',
+            }}
+            // Responsive column counts via media queries in Tailwind
+            ref={(el) => {
+              if (!el) return;
+              el.style.columnCount = '1';
+              if (window.matchMedia('(min-width: 640px)').matches) el.style.columnCount = '2';
+              if (window.matchMedia('(min-width: 1024px)').matches) el.style.columnCount = '3';
+              if (window.matchMedia('(min-width: 1280px)').matches) el.style.columnCount = '4';
+            }}
+          >
+            {museItems.map((item, index) => (
+              <MuseItemCard key={item.id} item={item} index={index} />
             ))}
           </div>
         )}
       </div>
       
-      {/* Dropzone Overlay */}
       {isDragActive && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg">
           <div className="flex flex-col items-center justify-center text-center text-foreground p-8 border-2 border-dashed border-primary rounded-xl">
@@ -110,7 +118,6 @@ export default function MuseboardClientWrapper({
         </div>
       )}
       
-      {/* --- ADDED --- The new components for capturing content */}
       <MuseboardFAB 
         onUploadClick={openFileDialog} 
         onPasteLinkClick={() => setIsPasteLinkModalOpen(true)}
