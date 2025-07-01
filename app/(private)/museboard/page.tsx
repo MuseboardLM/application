@@ -28,13 +28,13 @@ export default async function MuseboardPage() {
   if (!user) {
     redirect("/sign-in");
   }
-
-  // NOTE: This query is already correct because your RLS policy
-  // (deleted_at IS NULL) is automatically applied by the database.
+  
+  // Fetch only items that belong to the user AND have not been soft-deleted.
   const { data: museItems, error } = await supabase
     .from("muse_items")
     .select("*")
     .eq("user_id", user.id)
+    .is("deleted_at", null) // <-- This is the critical fix
     .order("created_at", { ascending: false });
 
   if (error) {
