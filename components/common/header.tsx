@@ -3,8 +3,8 @@
 import { createServer } from "@/lib/supabase/server";
 import { logOut } from "@/app/auth/actions/actions";
 import HeaderClient from "./header-client";
+import TrashView from "./TrashView"; // --- ADD THIS IMPORT ---
 
-// Define a type for the profile data for better type safety
 type Profile = {
   full_name: string | null;
   avatar_url: string | null;
@@ -18,7 +18,6 @@ export default async function Header() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // If a user is logged in, fetch their profile
   if (user) {
     const { data } = await supabase
       .from("profiles")
@@ -28,6 +27,6 @@ export default async function Header() {
     profile = data;
   }
 
-  // Pass user, profile, and the logout action to the client component
-  return <HeaderClient user={user} profile={profile} logOut={logOut} />;
+  // --- PASS THE TRASHVIEW COMPONENT AS A PROP ---
+  return <HeaderClient user={user} profile={profile} logOut={logOut} trashView={<TrashView />} />;
 }
