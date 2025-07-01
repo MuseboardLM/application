@@ -1,8 +1,6 @@
-// components/museboard/MuseItemCard.tsx
-
 "use client";
 
-import { useRef } from "react";
+import { useRef, useCallback } from "react";
 import Image from "next/image";
 import { MuseItem } from "@/app/(private)/museboard/page";
 import { Link2Icon, MoreVertical, Trash2, CheckSquare, Check } from "lucide-react";
@@ -14,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useLongPress } from "@/hooks/use-long-press";
 
 interface MuseItemCardProps {
   item: MuseItem;
@@ -60,14 +59,23 @@ export default function MuseItemCard({
     }
   };
 
+  const handleLongPress = useCallback(() => {
+    if (!isSelectionMode) {
+        onStartSelection();
+    }
+  }, [isSelectionMode, onStartSelection]);
+
+  const longPressEvents = useLongPress(handleLongPress, handleCardClick);
+
+
   const isImageType = item.content_type === "image" || item.content_type === "screenshot";
 
   return (
     <motion.div
       ref={cardRef}
+      {...longPressEvents} 
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      onClick={handleCardClick}
       style={{
         rotateX,
         rotateY,
@@ -78,10 +86,10 @@ export default function MuseItemCard({
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.05 }}
-      className="group relative mb-4 p-1 bg-transparent border-none will-change-transform [break-inside:avoid]"
+      className="group relative mb-4 p-1 bg-transparent border-none will-change-transform [break-inside:avoid] user-select-none"
     >
       <motion.div
-        className="h-full w-full rounded-lg bg-zinc-900 overflow-hidden flex flex-col transition-shadow duration-300 ease-in-out shadow-[0_40px_80px_-20px_rgba(0,0,0,0.5)] group-hover:shadow-[0_0_25px_var(--glow)]"
+        className="h-full w-full rounded-lg bg-zinc-900 overflow-hidden flex flex-col transition-shadow duration-300 ease-in-out shadow-[0_40px_80px_-20px_rgba(0,0,0,0.5)] md:group-hover:shadow-[0_0_25px_var(--glow)]"
         style={{ transform: "translateZ(20px)" }}
         animate={{ animation: `float 6s ease-in-out infinite`, animationDelay: `${index * 0.2}s` }}
         whileHover={{ scale: isSelectionMode ? 1 : 1.03 }}
@@ -110,7 +118,9 @@ export default function MuseItemCard({
           )}
         </AnimatePresence>
 
-        <div className="absolute top-2 right-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        {/* --- THIS IS THE FIX --- */}
+        {/* We changed `group-hover:opacity-100` to `md:group-hover:opacity-100` */}
+        <div className="absolute top-2 right-2 z-20 opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
           {!isSelectionMode && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
