@@ -66,11 +66,11 @@ export default function TrashItemCard({ item, isSelected, onToggleSelect, onRest
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48" onClick={(e) => e.stopPropagation()}>
-              <DropdownMenuItem onClick={onRestore}>
+              <DropdownMenuItem className="cursor-pointer hover:scale-103" onClick={onRestore}>
                 <RotateCw className="mr-2 size-4" />
                 <span>Restore</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-red-500 focus:text-white focus:bg-red-500" onClick={onPermanentDelete}>
+              <DropdownMenuItem className="text-red-500 focus:text-white focus:bg-red-500 cursor-pointer hover:scale-103" onClick={onPermanentDelete}>
                 <Trash2 className="mr-2 size-4" />
                 <span>Delete Permanently</span>
               </DropdownMenuItem>

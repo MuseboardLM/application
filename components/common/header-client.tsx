@@ -116,14 +116,14 @@ export default function HeaderClient({ user, profile, logOut, trashView }: Heade
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="cursor-pointer" onSelect={() => setIsSettingsOpen(true)}>
+                  <DropdownMenuItem className="cursor-pointer hover:scale-103" onSelect={() => setIsSettingsOpen(true)}>
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <form action={logOut} className="w-full">
                     <button type="submit" className="w-full text-left">
-                      <DropdownMenuItem className="cursor-pointer">
+                      <DropdownMenuItem className="cursor-pointer hover:scale-103">
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Log out</span>
                       </DropdownMenuItem>

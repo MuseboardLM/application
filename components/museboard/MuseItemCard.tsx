@@ -1,3 +1,5 @@
+// components/museboard/MuseItemCard.tsx
+
 "use client";
 
 import { useRef, useCallback } from "react";
@@ -125,19 +127,19 @@ export default function MuseItemCard({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="p-1.5 rounded-full bg-black/40 text-zinc-300 hover:bg-black/60 hover:text-white transition-all cursor-pointer"
+                  className="p-1.5 rounded-full bg-black/40 text-zinc-300 hover:bg-black/60 hover:text-white transition-all cursor-pointer hover:scale-105"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <MoreVertical size={18} />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-40" onClick={(e) => e.stopPropagation()}>
-                <DropdownMenuItem onClick={onStartSelection}>
+                <DropdownMenuItem className="cursor-pointer" onClick={onStartSelection}>
                   <CheckSquare className="mr-2 size-4" />
                   <span>Select</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className="text-red-500 focus:text-white focus:bg-red-500"
+                  className="text-red-500 focus:text-white focus:bg-red-500 cursor-pointer hover:scale-105"
                   onClick={onDelete}
                 >
                   <Trash2 className="mr-2 size-4" />
