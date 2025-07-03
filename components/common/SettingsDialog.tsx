@@ -41,11 +41,11 @@ export default function SettingsDialog({ user, profile, trashViewContent, open, 
             <DialogTitle className="text-xl font-bold px-3 pb-2">Settings</DialogTitle>
             
             <TabsList className="flex-col h-auto items-start justify-start bg-transparent p-0 gap-1 w-full">
-              <TabsTrigger value="general" className="w-full justify-start text-sm font-normal py-2 px-3 gap-2 data-[state=active]:bg-muted">
+              <TabsTrigger value="general" className="w-full justify-start text-sm font-normal py-2 px-3 gap-2 data-[state=active]:bg-muted cursor-pointer hover:scale-105">
                 <Settings className="size-4" />
                 General
               </TabsTrigger>
-              <TabsTrigger value="trash" className="w-full justify-start text-sm font-normal py-2 px-3 gap-2 data-[state=active]:bg-muted">
+              <TabsTrigger value="trash" className="w-full justify-start text-sm font-normal py-2 px-3 gap-2 data-[state=active]:bg-muted cursor-pointer hover:scale-105">
                 <Trash2 className="size-4" />
                 Trash
               </TabsTrigger>

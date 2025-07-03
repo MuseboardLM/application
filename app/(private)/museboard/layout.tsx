@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createServer } from "@/lib/supabase/server";
-import Header from "@/components/common/header"; // Import the Header component
+import Header from "@/components/common/header";
 
 export default async function MuseboardLayout({
   children,
@@ -15,17 +15,21 @@ export default async function MuseboardLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
-  // If the user is not logged in, redirect them to the sign-in page
   if (!user) {
     redirect("/sign-in");
   }
 
-  // Render the main page structure for authenticated users.
-  // This includes the Header and a 'main' content area but excludes the Footer.
   return (
     <div className="relative flex min-h-screen flex-col">
       <Header />
-      <main className="flex-1">{children}</main>
+      {/* --- THIS IS THE FIX --- */}
+      {/* We wrap the children in a container div that provides the constrained, 
+          centered width that the MuseboardClientWrapper's JavaScript expects. */}
+      <main className="flex-1">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          {children}
+        </div>
+      </main>
     </div>
   );
 }

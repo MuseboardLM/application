@@ -8,14 +8,14 @@ export type MuseItem = {
   id: string;
   user_id: string;
   created_at: string;
-  content: string;
-  content_type: string;
+  content: string | null;
+  content_type: "text" | "image" | "link" | "screenshot";
   description: string | null;
   source_url: string | null;
   ai_categories: string[] | null;
   ai_clusters: string[] | null;
+  deleted_at: string | null;
   signedUrl?: string;
-  deleted_at: string | null; // --- ADD THIS LINE ---
 };
 
 export default async function MuseboardPage() {
@@ -28,17 +28,16 @@ export default async function MuseboardPage() {
   if (!user) {
     redirect("/sign-in");
   }
-  
-  // Fetch only items that belong to the user AND have not been soft-deleted.
-  const { data: museItems, error } = await supabase
+
+  const { data: museItems, error: itemsError } = await supabase
     .from("muse_items")
     .select("*")
     .eq("user_id", user.id)
-    .is("deleted_at", null) // <-- This is the critical fix
+    .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("Error fetching muse items:", error.message);
+  if (itemsError) {
+    console.error("Error fetching muse items:", itemsError.message);
     return (
       <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center p-4">
         <p className="text-destructive">
@@ -48,26 +47,47 @@ export default async function MuseboardPage() {
     );
   }
 
-  const itemsWithSignedUrls = await Promise.all(
-    (museItems || []).map(async (item) => {
-      if (item.content_type === 'image' || item.content_type === 'screenshot') {
-        const { data, error: urlError } = await supabase.storage
-          .from('muse-files')
-          .createSignedUrl(item.content, 60 * 5);
+  const imagePaths = (museItems || [])
+    .filter(
+      (item): item is MuseItem & { content: string } =>
+        (item.content_type === "image" || item.content_type === "screenshot") &&
+        typeof item.content === "string"
+    )
+    .map((item) => item.content);
 
-        if (urlError) {
-          console.error(`Error creating signed URL for ${item.content}:`, urlError);
-          return { ...item, signedUrl: undefined };
+  let signedUrlMap: Map<string, string> = new Map();
+
+  if (imagePaths.length > 0) {
+    const { data: signedUrlsData, error: signedUrlsError } =
+      await supabase.storage
+        .from("muse-files")
+        .createSignedUrls(imagePaths, 60 * 5);
+
+    if (signedUrlsError) {
+      console.error("Error creating signed URLs:", signedUrlsError.message);
+    } else {
+      for (const urlData of signedUrlsData) {
+        if (urlData.signedUrl && urlData.path) {
+          signedUrlMap.set(urlData.path, urlData.signedUrl);
         }
-        return { ...item, signedUrl: data.signedUrl };
       }
-      return item;
-    })
-  );
+    }
+  }
 
+  const itemsWithSignedUrls = (museItems || []).map((item) => {
+    if (item.content && signedUrlMap.has(item.content)) {
+      return { ...item, signedUrl: signedUrlMap.get(item.content) };
+    }
+    return item;
+  });
+
+  // --- REVERTED ---
+  // The page component now correctly returns ONLY the client wrapper,
+  // without any layout divs. The layout is handled by layout.tsx.
   return (
-    <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-      <MuseboardClientWrapper initialMuseItems={itemsWithSignedUrls} user={user} />
-    </div>
+    <MuseboardClientWrapper
+      initialMuseItems={itemsWithSignedUrls}
+      user={user}
+    />
   );
 }
