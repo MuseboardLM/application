@@ -1,4 +1,4 @@
-// components/museboard/MuseItemCard.tsx
+//components/museboard/MuseItemCard.tsx
 
 "use client";
 
@@ -24,6 +24,7 @@ interface MuseItemCardProps {
   onToggleSelect: () => void;
   onStartSelection: () => void;
   onDelete: () => void;
+  onEnlarge: () => void;
 }
 
 export default function MuseItemCard({
@@ -34,8 +35,11 @@ export default function MuseItemCard({
   onToggleSelect,
   onStartSelection,
   onDelete,
+  onEnlarge,
 }: MuseItemCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const isDropdownInteraction = useRef(false);
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -55,27 +59,34 @@ export default function MuseItemCard({
     y.set(0);
   };
 
-  const handleCardClick = () => {
+  const handleCardClick = useCallback((event: React.MouseEvent | React.TouchEvent) => {
+    // Check if the click originated from the dropdown or its children
+    if (isDropdownInteraction.current) {
+      isDropdownInteraction.current = false;
+      return;
+    }
+
     if (isSelectionMode) {
       onToggleSelect();
+    } else {
+      onEnlarge();
     }
-  };
+  }, [isSelectionMode, onToggleSelect, onEnlarge]);
 
   const handleLongPress = useCallback(() => {
     if (!isSelectionMode) {
-        onStartSelection();
+      onStartSelection();
     }
   }, [isSelectionMode, onStartSelection]);
 
   const longPressEvents = useLongPress(handleLongPress, handleCardClick);
-
 
   const isImageType = item.content_type === "image" || item.content_type === "screenshot";
 
   return (
     <motion.div
       ref={cardRef}
-      {...longPressEvents} 
+      {...longPressEvents}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       style={{
@@ -83,12 +94,14 @@ export default function MuseItemCard({
         rotateY,
         transformStyle: "preserve-3d",
         perspective: "1000px",
-        cursor: isSelectionMode ? "pointer" : "default",
       }}
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.05 }}
-      className="group relative mb-4 p-1 bg-transparent border-none will-change-transform [break-inside:avoid] user-select-none"
+      className={cn(
+        "group relative mb-4 p-1 bg-transparent border-none will-change-transform [break-inside:avoid] user-select-none",
+        !isSelectionMode && "cursor-pointer"
+      )}
     >
       <motion.div
         className="h-full w-full rounded-lg bg-zinc-900 overflow-hidden flex flex-col transition-shadow duration-300 ease-in-out shadow-[0_40px_80px_-20px_rgba(0,0,0,0.5)] md:group-hover:shadow-[0_0_25px_var(--glow)]"
@@ -105,6 +118,7 @@ export default function MuseItemCard({
               exit={{ opacity: 0, scale: 0.5 }}
               transition={{ duration: 0.2 }}
               className="absolute top-3 left-3 z-20"
+              style={{ cursor: "pointer" }}
             >
               <div
                 className={cn(
@@ -120,27 +134,43 @@ export default function MuseItemCard({
           )}
         </AnimatePresence>
 
-        {/* --- THIS IS THE FIX --- */}
-        {/* We changed `group-hover:opacity-100` to `md:group-hover:opacity-100` */}
-        <div className="absolute top-2 right-2 z-20 opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
+        <div 
+          ref={dropdownRef}
+          className="absolute top-2 right-2 z-20 opacity-0 md:group-hover:opacity-100 transition-opacity duration-200"
+          onMouseDown={() => { isDropdownInteraction.current = true; }}
+          onTouchStart={() => { isDropdownInteraction.current = true; }}
+        >
           {!isSelectionMode && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="p-1.5 rounded-full bg-black/40 text-zinc-300 hover:bg-black/60 hover:text-white transition-all cursor-pointer hover:scale-105"
+                  className="p-1.5 rounded-full bg-black/40 text-zinc-300 hover:bg-black/60 hover:text-white transition-all cursor-pointer"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <MoreVertical size={18} />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40" onClick={(e) => e.stopPropagation()}>
-                <DropdownMenuItem className="cursor-pointer" onClick={onStartSelection}>
+              <DropdownMenuContent 
+                align="end" 
+                className="w-40"
+                onCloseAutoFocus={(e) => e.preventDefault()}
+              >
+                <DropdownMenuItem 
+                  className="cursor-pointer" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStartSelection();
+                  }}
+                >
                   <CheckSquare className="mr-2 size-4" />
                   <span>Select</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className="text-red-500 focus:text-white focus:bg-red-500 cursor-pointer hover:scale-105"
-                  onClick={onDelete}
+                  className="text-red-500 focus:text-white focus:bg-red-500 cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete();
+                  }}
                 >
                   <Trash2 className="mr-2 size-4" />
                   <span>Delete</span>
@@ -182,6 +212,7 @@ export default function MuseItemCard({
               href={item.source_url}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
               className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors"
               title={item.source_url}
             >
