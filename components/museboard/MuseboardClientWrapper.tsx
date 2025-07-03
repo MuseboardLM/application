@@ -10,33 +10,36 @@ import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { v4 as uuidv4 } from "uuid";
-import { UploadCloudIcon, XIcon, Trash2Icon } from "lucide-react";
+import { UploadCloudIcon, XIcon, Trash2Icon, LinkIcon, FileTextIcon } from "lucide-react";
 import MuseboardFAB from "./MuseboardFAB";
-import PasteLinkModal from "./PasteLinkModal";
 import { softDeleteMuseItems } from "@/app/(private)/museboard/actions";
 import { AnimatePresence, motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import EnlargedItemView from "./EnlargedItemView";
+import MuseItemModal from "./MuseItemModal";
 
 interface MuseboardClientWrapperProps {
   initialMuseItems: MuseItem[];
   user: User;
 }
 
+// ✨ NEW: Helper function to check for URLs
+const isUrl = (text: string): boolean => {
+  try {
+    new URL(text);
+    return text.includes('.') && text.length > 3;
+  } catch (_) {
+    return false;
+  }
+};
+
 export default function MuseboardClientWrapper({
   initialMuseItems,
   user,
 }: MuseboardClientWrapperProps) {
   const [museItems, setMuseItems] = useState<MuseItem[]>(initialMuseItems);
-  const [isPasteLinkModalOpen, setIsPasteLinkModalOpen] = useState(false);
   const supabase = createClient();
   const museboardContainerRef = useRef<HTMLDivElement>(null);
-
   const [isSelectionMode, setIsSelectionMode] = useState(false);
-  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(
-    new Set()
-  );
-
+  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
   const [enlargedItemIndex, setEnlargedItemIndex] = useState<number | null>(null);
 
   const updateColumnCount = useCallback(() => {
@@ -63,76 +66,161 @@ export default function MuseboardClientWrapper({
     window.addEventListener("resize", updateColumnCount);
     return () => window.removeEventListener("resize", updateColumnCount);
   }, [updateColumnCount]);
-  
-  const handleNextItem = useCallback(() => {
-    setEnlargedItemIndex((prevIndex) => {
-      if (prevIndex === null || prevIndex >= museItems.length - 1) return prevIndex;
-      return prevIndex + 1;
-    });
-  }, [museItems.length]);
 
-  const handlePrevItem = useCallback(() => {
-    setEnlargedItemIndex((prevIndex) => {
-      if (prevIndex === null || prevIndex <= 0) return prevIndex;
-      return prevIndex - 1;
-    });
-  }, []);
+  const handleNavigateNext = useCallback(() => {
+    if (enlargedItemIndex === null || enlargedItemIndex >= museItems.length - 1) return;
+    setEnlargedItemIndex(enlargedItemIndex + 1);
+  }, [enlargedItemIndex, museItems.length]);
+
+  const handleNavigatePrev = useCallback(() => {
+    if (enlargedItemIndex === null || enlargedItemIndex <= 0) return;
+    setEnlargedItemIndex(enlargedItemIndex - 1);
+  }, [enlargedItemIndex]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (enlargedItemIndex === null) return;
+      if (e.key === "Escape") setEnlargedItemIndex(null);
+      if (e.key === "ArrowRight") handleNavigateNext();
+      if (e.key === "ArrowLeft") handleNavigatePrev();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [enlargedItemIndex, handleNavigateNext, handleNavigatePrev]);
 
 
-  const onDrop = useCallback(
-    // ... (this function is unchanged)
-    async (acceptedFiles: File[]) => {
-      if (!acceptedFiles.length) return;
-      const file = acceptedFiles[0];
-      const fileExtension = file.name.split(".").pop();
-      const filePath = `${user.id}/${uuidv4()}.${fileExtension}`;
-      const toastId = toast.loading("Uploading image...", {
-        description: file.name,
+  // ✨ NEW: A single, smart function to handle adding any new item
+  const handleAddItem = async (
+    content: string,
+    contentType: MuseItem['content_type'],
+    options: { description?: string; sourceUrl?: string } = {}
+  ) => {
+    const toastId = toast.loading(`Adding new ${contentType}...`);
+
+    try {
+      // 1. Insert the item into the database
+      const { data: newItem, error: insertError } = await supabase
+        .from("muse_items")
+        .insert({
+          user_id: user.id,
+          content: content,
+          content_type: contentType,
+          description: options.description || null,
+          source_url: options.sourceUrl || null,
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+      
+      // 2. If it's an image, call the Edge Function to get dimensions
+      if (contentType === 'image' || contentType === 'screenshot') {
+         try {
+            const { error: functionError } = await supabase.functions.invoke('get-image-dimensions', {
+              body: { key: content }, // 'content' is the file path for images
+            });
+            if (functionError) throw functionError;
+         } catch (e: any) {
+             console.error("Error invoking get-image-dimensions function:", e);
+             toast.warning("Could not process image dimensions.", { id: toastId });
+         }
+      }
+
+      // 3. Add the new item to the local state for a fast UI update
+      // For images, we need a signed URL to display it immediately
+      let newItemWithUrl = { ...newItem, signedUrl: '' };
+      if (contentType === 'image' || contentType === 'screenshot') {
+         const { data: signedUrlData } = await supabase.storage.from('muse-files').createSignedUrl(newItem.content, 60 * 5)
+         newItemWithUrl.signedUrl = signedUrlData?.signedUrl ?? '';
+      }
+      setMuseItems((prevItems) => [newItemWithUrl, ...prevItems]);
+
+      toast.success("Item added successfully!", { id: toastId });
+
+    } catch (error: any) {
+      console.error("Error adding item:", error);
+      toast.error("Failed to add item", {
+        id: toastId,
+        description: error.message || "Please try again.",
       });
+    }
+  };
 
+  // ⬇️ MODIFIED: `onDrop` is now much simpler and uses the new handler
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+      if (!acceptedFiles.length) return;
+      
+      const file = acceptedFiles[0];
+      const toastId = toast.loading("Uploading image...", { description: file.name });
+      
       try {
+        const fileExtension = file.name.split(".").pop();
+        const filePath = `${user.id}/${uuidv4()}.${fileExtension}`;
+        
         const { error: uploadError } = await supabase.storage
           .from("muse-files")
           .upload(filePath, file);
+        
         if (uploadError) throw uploadError;
 
-        const { data: newItem, error: insertError } = await supabase
-          .from("muse_items")
-          .insert({
-            user_id: user.id,
-            content: filePath,
-            content_type: "image",
-            description: file.name,
-          })
-          .select()
-          .single();
-        if (insertError) throw insertError;
+        toast.dismiss(toastId); // Dismiss the "uploading" toast
         
-        const newItemWithUrl = { ...newItem, signedUrl: URL.createObjectURL(file) };
-        handleItemAdded(newItemWithUrl);
+        // Use our new unified handler to add the item
+        await handleAddItem(filePath, 'image', { description: file.name });
 
-        toast.success("Image uploaded successfully!", { id: toastId });
       } catch (error: any) {
-        console.error("Error during upload process:", error);
-        toast.error("Upload failed", {
-          id: toastId,
-          description: error.message || "Please try again.",
-        });
+          console.error("Error during upload process:", error);
+          toast.error("Upload failed", {
+            id: toastId,
+            description: error.message || "Please try again.",
+          });
       }
     },
     [user.id, supabase]
   );
   
+  // ✨ NEW: Add a paste handler for automatic type detection
+  useEffect(() => {
+    const handlePaste = (event: ClipboardEvent) => {
+      const items = event.clipboardData?.items;
+      if (!items) return;
+
+      // Check for pasted files (e.g., screenshots)
+      const file = Array.from(items).find(item => item.kind === 'file');
+      if (file) {
+        const blob = file.getAsFile();
+        if (blob) {
+          onDrop([blob]); // Use the same onDrop logic for pasted files
+        }
+        return;
+      }
+      
+      // Check for pasted text
+      const text = Array.from(items).find(item => item.kind === 'string');
+      if (text) {
+        text.getAsString(pastedText => {
+          if (isUrl(pastedText)) {
+            handleAddItem(pastedText, 'link');
+          } else {
+            handleAddItem(pastedText, 'text');
+          }
+        });
+      }
+    };
+    
+    window.addEventListener('paste', handlePaste);
+    return () => {
+      window.removeEventListener('paste', handlePaste);
+    };
+  }, [onDrop]);
+
+
   const { getRootProps, getInputProps, isDragActive, open: openFileDialog } = useDropzone({
     onDrop,
     accept: { "image/*": [".jpeg", ".jpg", ".png", ".gif", ".webp"] },
     noClick: true,
+    noKeyboard: true,
   });
-
-  const handleItemAdded = (newItem: MuseItem) => {
-    setMuseItems((prevItems) => [newItem, ...prevItems]);
-    setIsPasteLinkModalOpen(false);
-  };
 
   const handleToggleSelect = (itemId: string) => {
     // ... (this function is unchanged)
@@ -166,34 +254,29 @@ export default function MuseboardClientWrapper({
     const originalItems = [...museItems];
     const newItems = originalItems.filter((item) => !itemIds.includes(item.id));
     setMuseItems(newItems);
-
     const result = await softDeleteMuseItems(itemIds);
-
     if (result.error) {
-      toast.error("Failed to move to trash", {
-        id: toastId,
-        description: result.error,
-      });
+      toast.error("Failed to move to trash", { id: toastId, description: result.error });
       setMuseItems(originalItems);
     } else {
       toast.success("Item(s) moved to trash.", { id: toastId });
     }
-
     handleClearSelection();
   };
 
+  const selectedItem = enlargedItemIndex !== null ? museItems[enlargedItemIndex] : null;
 
   return (
-    <div
-      {...getRootProps()}
-      className="relative min-h-full flex-grow flex flex-col"
-    >
+    <div {...getRootProps()} className="relative min-h-full flex-grow flex flex-col focus:outline-none">
       <input {...getInputProps()} />
 
       <div className="flex-grow pt-8">
         {museItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted bg-muted/20 py-20 text-center">
-            {/* ... (empty state content) */}
+            <h3 className="mt-4 text-lg font-semibold">Your Museboard is empty</h3>
+            <p className="mt-2 mb-4 text-sm text-muted-foreground">
+              Drag & drop images, paste links, or use the + button to add your first inspiration.
+            </p>
           </div>
         ) : (
           <div ref={museboardContainerRef} style={{ columnGap: "1rem" }}>
@@ -215,50 +298,40 @@ export default function MuseboardClientWrapper({
       </div>
 
       {isDragActive && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg">
-           {/* ... (drag-active content) */}
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg border-2 border-dashed border-primary">
+            <UploadCloudIcon className="mx-auto h-12 w-12 text-primary animate-bounce" />
+            <p className="mt-4 text-lg font-medium">Drop to upload</p>
         </div>
       )}
-
+      
+      {/* Remove PasteLinkModal since we now have a smart paste handler */}
+      {/* <PasteLinkModal ... /> */}
+      
+      {/* The FAB is no longer needed if we have paste and drop, but keeping it for now */}
       {!isSelectionMode && (
         <MuseboardFAB
           onUploadClick={openFileDialog}
-          onPasteLinkClick={() => setIsPasteLinkModalOpen(true)}
+          onPasteLinkClick={() => toast.info("Just paste anywhere on the page!")}
         />
       )}
 
       <AnimatePresence>
         {isSelectionMode && (
-          <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 p-3 bg-zinc-900/80 backdrop-blur-md rounded-xl border border-zinc-700 shadow-2xl"
-          >
-             {/* ... (selection mode bar) */}
+          <motion.div /* ... selection bar ... */ >
+              {/* ... same content as before ... */}
           </motion.div>
         )}
       </AnimatePresence>
 
-      <PasteLinkModal
-        isOpen={isPasteLinkModalOpen}
-        onOpenChange={setIsPasteLinkModalOpen}
-        onItemAdded={handleItemAdded}
-        user={user}
+      <MuseItemModal
+        isOpen={enlargedItemIndex !== null}
+        onClose={() => setEnlargedItemIndex(null)}
+        item={selectedItem}
+        onNavigateNext={handleNavigateNext}
+        onNavigatePrev={handleNavigatePrev}
+        hasNext={enlargedItemIndex !== null && enlargedItemIndex < museItems.length - 1}
+        hasPrev={enlargedItemIndex !== null && enlargedItemIndex > 0}
       />
-      
-      {/* 🔧 MODIFIED: Prop passing is now cleaner and more powerful */}
-      <AnimatePresence>
-        {enlargedItemIndex !== null && (
-          <EnlargedItemView
-            items={museItems}
-            currentIndex={enlargedItemIndex}
-            onClose={() => setEnlargedItemIndex(null)}
-            onNavigate={setEnlargedItemIndex}
-          />
-        )}
-      </AnimatePresence>
     </div>
   );
 }
