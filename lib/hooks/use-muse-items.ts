@@ -8,7 +8,8 @@ import {
   softDeleteMuseItems, 
   restoreMuseItems, 
   permanentlyDeleteMuseItems 
-} from "@/app/(private)/museboard/actions";
+} from "@/lib/actions";
+import { useErrorHandler } from "@/lib/utils/error-handler";
 
 export type MuseItem = {
   id: string;
@@ -33,6 +34,7 @@ export function useMuseItems({ initialItems, showDeleted = false }: UseMuseItems
   const [items, setItems] = useState<MuseItem[]>(initialItems);
   const [isPending, startTransition] = useTransition();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const { handleError } = useErrorHandler();
 
   // Filter items based on showDeleted flag
   const filteredItems = items.filter(item => 
@@ -69,14 +71,14 @@ export function useMuseItems({ initialItems, showDeleted = false }: UseMuseItems
       } else {
         // Revert optimistic update on error
         setItems(originalItems);
-        toast.error(result.error || "Failed to delete items");
+        handleError(new Error(result.error), "Soft delete items");
       }
     } catch (error) {
       // Revert optimistic update on error
       setItems(originalItems);
-      toast.error("An unexpected error occurred");
+      handleError(error, "Soft delete items");
     }
-  }, [items]);
+  }, [items, handleError]);
 
   const handleRestore = useCallback(async (itemIds: string[]) => {
     if (itemIds.length === 0) return;
@@ -107,14 +109,14 @@ export function useMuseItems({ initialItems, showDeleted = false }: UseMuseItems
       } else {
         // Revert optimistic update on error
         setItems(originalItems);
-        toast.error(result.error || "Failed to restore items");
+        handleError(new Error(result.error), "Restore items");
       }
     } catch (error) {
       // Revert optimistic update on error
       setItems(originalItems);
-      toast.error("An unexpected error occurred");
+      handleError(error, "Restore items");
     }
-  }, [items]);
+  }, [items, handleError]);
 
   const handlePermanentDelete = useCallback(async (itemIds: string[]) => {
     if (itemIds.length === 0) return;
@@ -141,14 +143,14 @@ export function useMuseItems({ initialItems, showDeleted = false }: UseMuseItems
       } else {
         // Revert optimistic update on error
         setItems(originalItems);
-        toast.error(result.error || "Failed to permanently delete items");
+        handleError(new Error(result.error), "Permanently delete items");
       }
     } catch (error) {
       // Revert optimistic update on error
       setItems(originalItems);
-      toast.error("An unexpected error occurred");
+      handleError(error, "Permanently delete items");
     }
-  }, [items]);
+  }, [items, handleError]);
 
   const addItem = useCallback((item: MuseItem) => {
     startTransition(() => {

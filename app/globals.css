@@ -266,6 +266,24 @@
 [data-nextjs-badge-root] {
   display: none !important;
 }
+/* Add this to your app/globals.css file */
 
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@layer utilities {
+  .animate-shimmer {
+    animation: shimmer 2s infinite;
+  }
+}
+
+/* Or if you prefer to use arbitrary values in Tailwind 4 */
+/* You can also use: animate-[shimmer_2s_infinite] directly in your classes */
 
    }
