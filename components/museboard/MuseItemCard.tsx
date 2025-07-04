@@ -1,12 +1,10 @@
-// components/museboard/MuseItemCard.tsx
-
 "use client";
 
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useState } from "react";
 import Image from "next/image";
 import { MuseItem } from "@/app/(private)/museboard/page";
 import { Link2Icon, MoreVertical, Trash2, CheckSquare, Check } from "lucide-react";
-import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,22 +38,16 @@ export default function MuseItemCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isDropdownInteraction = useRef(false);
+  const [isHovered, setIsHovered] = useState(false);
 
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const rotateX = useTransform(y, [-150, 150], [10, -10]);
-  const rotateY = useTransform(x, [-150, 150], [-10, 10]);
-
-  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current || isSelectionMode) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    x.set(event.clientX - rect.left - rect.width / 2);
-    y.set(event.clientY - rect.top - rect.height / 2);
+  const handleMouseEnter = () => {
+    if (!isSelectionMode) {
+      setIsHovered(true);
+    }
   };
 
   const handleMouseLeave = () => {
-    x.set(0);
-    y.set(0);
+    setIsHovered(false);
   };
 
   const handleCardClick = useCallback((event: React.MouseEvent | React.TouchEvent) => {
@@ -79,62 +71,96 @@ export default function MuseItemCard({
   const longPressEvents = useLongPress(handleLongPress, handleCardClick);
 
   const isImageType = item.content_type === "image" || item.content_type === "screenshot";
+  const isTextType = item.content_type === "text";
 
   return (
     <motion.div
       ref={cardRef}
       {...longPressEvents}
-      onMouseMove={handleMouseMove}
+      onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       style={{
-        rotateX,
-        rotateY,
-        transformStyle: "preserve-3d",
-        perspective: "1000px",
+        zIndex: isHovered ? 50 : 1,
+        position: "relative",
       }}
       initial={{ opacity: 0, y: 50 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.05 }}
+      animate={{
+        opacity: 1,
+        y: isHovered ? 0 : [-2, 2],
+        // ✨ SUGGESTION 1: Increased magnification scale for text cards from 1.7 to 2.0
+        scale: isHovered && !isSelectionMode ? (isTextType ? 2.0 : 1.15) : 1,
+      }}
+      transition={{
+        y: {
+          duration: 4,
+          repeat: Infinity,
+          repeatType: "mirror",
+          ease: "easeInOut",
+          delay: index * 0.2,
+        },
+        scale: { type: "spring", stiffness: 200, damping: 20 },
+        opacity: { duration: 0.5, delay: index * 0.05 },
+      }}
       className={cn(
         "group relative mb-4 p-1 bg-transparent border-none will-change-transform [break-inside:avoid] user-select-none",
-        !isSelectionMode && "cursor-pointer"
+        !isSelectionMode && "cursor-pointer",
+        isHovered && !isSelectionMode && "muse-card-magnified"
       )}
     >
-      <motion.div
-        className="h-full w-full rounded-lg bg-zinc-900 overflow-hidden flex flex-col transition-shadow duration-300 ease-in-out shadow-[0_40px_80px_-20px_rgba(0,0,0,0.5)] md:group-hover:shadow-[0_0_25px_var(--glow)]"
-        style={{ transform: "translateZ(20px)" }}
-        animate={{ animation: `float 6s ease-in-out infinite`, animationDelay: `${index * 0.2}s` }}
-        whileHover={{ scale: isSelectionMode ? 1 : 1.03 }}
-        transition={{ type: "spring", stiffness: 200, damping: 20 }}
+      <AnimatePresence>
+        {isHovered && !isSelectionMode && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 pointer-events-none"
+            style={{ zIndex: 40 }}
+          />
+        )}
+      </AnimatePresence>
+
+      <div
+        className={cn(
+          "h-full w-full rounded-lg bg-zinc-900 overflow-hidden flex flex-col transition-shadow duration-400 ease-out",
+          "shadow-[0_40px_80px_-20px_rgba(0,0,0,0.5)]",
+          isHovered && !isSelectionMode && "shadow-[0_0_60px_var(--glow),0_0_120px_var(--glow)] ring-2 ring-white/20"
+        )}
+        style={{
+          position: "relative",
+          zIndex: isHovered ? 50 : 1
+        }}
       >
         <AnimatePresence>
           {isSelectionMode && (
-             <motion.div
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.5 }}
-              transition={{ duration: 0.2 }}
-              className="absolute top-3 left-3 z-20"
-              style={{ cursor: "pointer" }}
-            >
-              <div
-                className={cn(
-                  "flex items-center justify-center h-6 w-6 rounded-md border-2 bg-black/50 backdrop-blur-sm transition-all duration-200",
-                  isSelected
-                    ? "bg-zinc-100 border-zinc-300"
-                    : "border-zinc-400 group-hover:border-white"
-                )}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.5 }}
+                transition={{ duration: 0.2 }}
+                className="absolute top-3 left-3 z-20"
+                style={{ cursor: "pointer" }}
               >
-                {isSelected && <Check className="h-4 w-4 text-zinc-900" />}
-              </div>
+                <div
+                  className={cn(
+                    "flex items-center justify-center h-6 w-6 rounded-md border-2 bg-black/50 backdrop-blur-sm transition-all duration-200",
+                    isSelected
+                      ? "bg-zinc-100 border-zinc-300"
+                      : "border-zinc-400 group-hover:border-white"
+                  )}
+                >
+                  {isSelected && <Check className="h-4 w-4 text-zinc-900" />}
+                </div>
             </motion.div>
           )}
         </AnimatePresence>
         
-        {/* ✨ RESTORED: The hover menu logic is now back where it belongs */}
-        <div 
+        <div
           ref={dropdownRef}
-          className="absolute top-2 right-2 z-20 opacity-0 md:group-hover:opacity-100 transition-opacity duration-200"
+          className={cn(
+            "absolute top-2 right-2 z-20 transition-opacity duration-200",
+            isHovered && !isSelectionMode ? "opacity-100" : "opacity-0 md:group-hover:opacity-100"
+          )}
           onMouseDown={() => { isDropdownInteraction.current = true; }}
           onTouchStart={() => { isDropdownInteraction.current = true; }}
         >
@@ -148,13 +174,13 @@ export default function MuseItemCard({
                   <MoreVertical size={18} />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent 
-                align="end" 
+              <DropdownMenuContent
+                align="end"
                 className="w-40"
                 onCloseAutoFocus={(e) => e.preventDefault()}
               >
-                <DropdownMenuItem 
-                  className="cursor-pointer" 
+                <DropdownMenuItem
+                  className="cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     onStartSelection();
@@ -193,9 +219,20 @@ export default function MuseItemCard({
         )}
 
         {!isImageType && (
+          // Container div is back to a simple relative block
           <div className="p-5 flex-grow relative">
             {isSelectionMode && <div className={cn("absolute inset-0 bg-black/30 z-10 transition-opacity", !isSelected && "bg-black/60")} />}
-            <p className="text-base text-zinc-300 whitespace-pre-wrap leading-relaxed">{item.content}</p>
+            <p className={cn(
+              "transition-all duration-300 ease-out",
+              "whitespace-pre-wrap",
+              // The max-width constraint has been removed
+              isHovered && !isSelectionMode 
+                // ✨ SUGGESTION 2: Calibrated font size to work with the new 2.0x scale
+                ? "text-white text-lg leading-relaxed font-normal" 
+                : "text-base text-zinc-300 leading-relaxed"
+            )}>
+              {item.content}
+            </p>
           </div>
         )}
 
@@ -219,7 +256,7 @@ export default function MuseItemCard({
             </a>
           </motion.div>
         )}
-      </motion.div>
+      </div>
     </motion.div>
   );
 }

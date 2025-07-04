@@ -146,6 +146,36 @@
        transform: translateY(-2px);
      }
    }
+
+   /* Shimmer animation keyframe */
+   @keyframes shimmer {
+     0% {
+       transform: translateX(-100%);
+     }
+     100% {
+       transform: translateX(100%);
+     }
+   }
+
+   /* Magnifying hover effect keyframes */
+   @keyframes subtle-pulse {
+     0%, 100% {
+       transform: scale(1);
+     }
+     50% {
+       transform: scale(1.005);
+     }
+   }
+
+   /* Enhanced pulse animation for magnified cards */
+   @keyframes enhanced-pulse {
+     0%, 100% {
+       filter: brightness(1);
+     }
+     50% {
+       filter: brightness(1.02);
+     }
+   }
    
    /* ---------- Base layer utilities ---------------------------------- */
    @layer base {
@@ -178,7 +208,6 @@
        text-shadow: 0 0 12px oklch(1 0 0 / 0.5);
      }
 
-     /* --- ADD THIS SECTION --- */
      /* Utility for adding a glow effect to cards on hover */
      .card-glow-on-hover {
        /* Apply a smooth transition to the shadow property */
@@ -188,7 +217,6 @@
        /* On hover, apply a white glow using the existing --glow variable */
        box-shadow: 0 0 25px var(--glow);
      }
-     /* --- END OF ADDED SECTION --- */
    
      /* ================================================================
         Electric-Iris — Hologram-Noise Overlay  (polished)
@@ -263,27 +291,57 @@
      }
 
      /* Hide Next.js dev tools badge */
-[data-nextjs-badge-root] {
-  display: none !important;
-}
-/* Add this to your app/globals.css file */
+     [data-nextjs-badge-root] {
+       display: none !important;
+     }
+   }
 
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
-}
+   /* ---------- Utility layer for animations and effects ------------- */
+   @layer utilities {
+     .animate-shimmer {
+       animation: shimmer 2s infinite;
+     }
 
-@layer utilities {
-  .animate-shimmer {
-    animation: shimmer 2s infinite;
-  }
-}
+     /* Enhanced muse card magnification effects */
+     .muse-card-magnified {
+       position: relative;
+       transform-origin: center;
+       transition: all 0.15s ease-out;
+     }
 
-/* Or if you prefer to use arbitrary values in Tailwind 4 */
-/* You can also use: animate-[shimmer_2s_infinite] directly in your classes */
+     /* Smooth magnification for better text readability */
+     .muse-card-magnified:hover {
+       /* Subtle brightness animation when magnified */
+       animation: enhanced-pulse 4s ease-in-out infinite;
+     }
 
+     /* Ensure magnified cards appear above others with enhanced spacing */
+     .muse-card-magnified::before {
+       content: '';
+       position: absolute;
+       inset: -20px;
+       background: transparent;
+       z-index: -1;
+       border-radius: inherit;
+       pointer-events: none;
+     }
+   }
+
+   /* ---------- Accessibility and reduced motion -------------------- */
+   @media (prefers-reduced-motion: reduce) {
+     .muse-card-magnified {
+       animation: none !important;
+       transition: transform 0.1s ease !important;
+     }
+     
+     .muse-card-magnified:hover {
+       animation: none !important;
+     }
+
+     /* Disable floating animation for reduced motion */
+     @keyframes float {
+       0%, 50%, 100% {
+         transform: translateY(0);
+       }
+     }
    }
