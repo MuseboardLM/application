@@ -12,10 +12,11 @@ import { createClient } from "@/lib/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { UploadCloudIcon, XIcon, Trash2Icon } from "lucide-react";
 import MuseboardFAB from "./MuseboardFAB";
-import { softDeleteMuseItems } from "@/app/(private)/museboard/actions";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import MuseItemModal from "./MuseItemModal";
+import { useMuseItems } from "@/lib/hooks/use-muse-items";
+import { useFileUpload } from "@/lib/hooks/use-file-upload";
 
 interface MuseboardClientWrapperProps {
   initialMuseItems: MuseItem[];
@@ -35,7 +36,37 @@ export default function MuseboardClientWrapper({
   initialMuseItems,
   user,
 }: MuseboardClientWrapperProps) {
-  const [museItems, setMuseItems] = useState<MuseItem[]>(initialMuseItems);
+  // Use the new custom hooks
+  const {
+    items: museItems,
+    loading,
+    actions,
+    selection,
+  } = useMuseItems({ initialItems: initialMuseItems });
+
+  const fileUpload = useFileUpload({
+    onSuccess: (url, fileName) => {
+      // Create new muse item with uploaded file
+      const newItem: MuseItem = {
+        id: uuidv4(),
+        user_id: user.id,
+        created_at: new Date().toISOString(),
+        content: fileName,
+        content_type: "image",
+        description: null,
+        source_url: null,
+        ai_categories: null,
+        ai_clusters: null,
+        deleted_at: null,
+        signedUrl: url,
+      };
+      actions.addItem(newItem);
+    },
+    onError: (error) => {
+      toast.error("Upload failed", { description: error });
+    },
+  });
+
   const supabase = createClient();
   const museboardContainerRef = useRef<HTMLDivElement>(null);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -43,7 +74,6 @@ export default function MuseboardClientWrapper({
   const [enlargedItemIndex, setEnlargedItemIndex] = useState<number | null>(null);
 
   const updateColumnCount = useCallback(() => {
-    // ... (this function is unchanged)
     const el = museboardContainerRef.current;
     if (!el) return;
     el.style.width = "100%";
@@ -96,20 +126,74 @@ export default function MuseboardClientWrapper({
     contentType: MuseItem['content_type'],
     options: { description?: string; sourceUrl?: string } = {}
   ) => {
-    // ... (this function is unchanged)
+    const newItem: MuseItem = {
+      id: uuidv4(),
+      user_id: user.id,
+      created_at: new Date().toISOString(),
+      content,
+      content_type: contentType,
+      description: options.description || null,
+      source_url: options.sourceUrl || null,
+      ai_categories: null,
+      ai_clusters: null,
+      deleted_at: null,
+    };
+
+    // Add to database
+    const { error } = await supabase
+      .from("muse_items")
+      .insert([newItem]);
+
+    if (error) {
+      toast.error("Failed to add item", { description: error.message });
+      return;
+    }
+
+    // Add to local state using the hook
+    actions.addItem(newItem);
   };
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    // ... (this function is unchanged)
-  }, [user.id, supabase]);
+    if (acceptedFiles.length === 0) return;
+
+    for (const file of acceptedFiles) {
+      await fileUpload.uploadFile(file);
+    }
+  }, [fileUpload]);
   
   useEffect(() => {
     const handlePaste = (event: ClipboardEvent) => {
-      // ... (this function is unchanged)
+      if (event.clipboardData) {
+        const items = event.clipboardData.items;
+        
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          
+          if (item.type.startsWith('image/')) {
+            // Handle pasted images
+            const file = item.getAsFile();
+            if (file) {
+              fileUpload.uploadFile(file);
+            }
+          } else if (item.type === 'text/plain') {
+            // Handle pasted text/links
+            item.getAsString((text) => {
+              if (text.trim()) {
+                if (isUrl(text)) {
+                  handleAddItem(text, 'link', { sourceUrl: text });
+                } else {
+                  handleAddItem(text, 'text');
+                }
+              }
+            });
+          }
+        }
+      }
     };
+    
     window.addEventListener('paste', handlePaste);
     return () => window.removeEventListener('paste', handlePaste);
-  }, [onDrop]);
+  }, [fileUpload, handleAddItem]);
 
   const { getRootProps, getInputProps, isDragActive, open: openFileDialog } = useDropzone({
     onDrop,
@@ -145,18 +229,8 @@ export default function MuseboardClientWrapper({
   };
 
   const handleDelete = async (itemIds: string[]) => {
-    // ... (this function is unchanged)
-    const toastId = toast.loading(`Moving ${itemIds.length} item(s) to trash...`);
-    const originalItems = [...museItems];
-    const newItems = originalItems.filter((item) => !itemIds.includes(item.id));
-    setMuseItems(newItems);
-    const result = await softDeleteMuseItems(itemIds);
-    if (result.error) {
-      toast.error("Failed to move to trash", { id: toastId, description: result.error });
-      setMuseItems(originalItems);
-    } else {
-      toast.success("Item(s) moved to trash.", { id: toastId });
-    }
+    // Use the optimistic update from the hook
+    await actions.softDelete(itemIds);
     handleClearSelection();
   };
 
@@ -167,7 +241,6 @@ export default function MuseboardClientWrapper({
       <input {...getInputProps()} />
 
       <div className="flex-grow pt-8">
-        {/* ... (muse items mapping is unchanged) ... */}
         {museItems.length > 0 ? (
           <div ref={museboardContainerRef} style={{ columnGap: "1rem" }}>
             {museItems.map((item, index) => (
@@ -196,8 +269,8 @@ export default function MuseboardClientWrapper({
 
       {isDragActive && (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg border-2 border-dashed border-primary">
-            <UploadCloudIcon className="mx-auto h-12 w-12 text-primary animate-bounce" />
-            <p className="mt-4 text-lg font-medium">Drop to upload</p>
+          <UploadCloudIcon className="mx-auto h-12 w-12 text-primary animate-bounce" />
+          <p className="mt-4 text-lg font-medium">Drop to upload</p>
         </div>
       )}
       
@@ -208,7 +281,7 @@ export default function MuseboardClientWrapper({
         />
       )}
 
-      {/* ✨ RESTORED: The logic and content for the selection action bar */}
+      {/* Selection action bar */}
       <AnimatePresence>
         {isSelectionMode && (
           <motion.div
@@ -222,17 +295,16 @@ export default function MuseboardClientWrapper({
               {selectedItemIds.size} selected
             </span>
 
-            {/* MODIFIED: Added hover effect class */}
             <Button
               variant="destructive"
               size="sm"
               onClick={() => handleDelete(Array.from(selectedItemIds))}
               className="cursor-pointer hover:scale-103 transition-transform"
+              disabled={loading}
             >
               <Trash2Icon className="mr-2 size-4" /> Delete
             </Button>
             
-            {/* MODIFIED: Changed to an icon-only button with hover effect */}
             <Button
               variant="ghost"
               size="icon"
@@ -255,6 +327,16 @@ export default function MuseboardClientWrapper({
         hasNext={enlargedItemIndex !== null && enlargedItemIndex < museItems.length - 1}
         hasPrev={enlargedItemIndex !== null && enlargedItemIndex > 0}
       />
+
+      {/* Upload Progress Indicator */}
+      {fileUpload.isUploading && (
+        <div className="fixed bottom-4 right-4 bg-background border rounded-lg p-4 shadow-lg z-40">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            <span className="text-sm">Uploading... {fileUpload.progress}%</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

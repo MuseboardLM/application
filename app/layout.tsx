@@ -1,10 +1,7 @@
-// app/layout.tsx
-
 import type { Metadata } from "next";
 import { Source_Sans_3 as FontSans } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "@/components/ui/sonner"; // Make sure the Toaster is here
+import { AppProviders } from "@/components/providers/AppProviders";
 
 const fontSans = FontSans({
   variable: "--font-sans",
@@ -28,15 +25,9 @@ export default function RootLayout({
       <body
         className={`${fontSans.variable} font-sans antialiased bg-background text-foreground`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+        <AppProviders>
           {children}
-          <Toaster position="top-center" richColors />
-        </ThemeProvider>
+        </AppProviders>
       </body>
     </html>
   );

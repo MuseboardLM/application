@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { useLongPress } from "@/hooks/use-long-press";
+import { useLongPress } from "@/lib/hooks/use-long-press";
 
 interface MuseItemCardProps {
   item: MuseItem;
