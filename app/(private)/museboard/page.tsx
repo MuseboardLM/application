@@ -15,6 +15,9 @@ export type MuseItem = {
   ai_categories: string[] | null;
   ai_clusters: string[] | null;
   deleted_at: string | null;
+  // Add missing image dimension properties
+  image_width: number | null;
+  image_height: number | null;
   signedUrl?: string;
 };
 
@@ -81,9 +84,6 @@ export default async function MuseboardPage() {
     return item;
   });
 
-  // --- REVERTED ---
-  // The page component now correctly returns ONLY the client wrapper,
-  // without any layout divs. The layout is handled by layout.tsx.
   return (
     <MuseboardClientWrapper
       initialMuseItems={itemsWithSignedUrls}

@@ -27,7 +27,7 @@ export function SignUpForm() {
     setIsLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -42,15 +42,17 @@ export function SignUpForm() {
 
     if (error) {
       setError(error.message);
-    } else {
+    } else if (data.user && !data.user.email_confirmed_at) {
+      // Email confirmation required
       setError("Please check your email to confirm your sign-up.");
-      router.refresh();
+    } else if (data.user) {
+      // User is signed up and confirmed, redirect to onboarding
+      router.push("/onboarding");
     }
   };
 
   return (
     <form onSubmit={handleSignUp} className="space-y-4">
-      {/* --- ADDED FULL NAME FIELD --- */}
       <div className="space-y-2">
         <label
           htmlFor="fullName"
@@ -68,7 +70,6 @@ export function SignUpForm() {
           disabled={isLoading}
         />
       </div>
-      {/* ----------------------------- */}
 
       <div className="space-y-2">
         <label

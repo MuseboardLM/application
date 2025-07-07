@@ -1,9 +1,11 @@
+// middleware.ts
+
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Define protected routes that require authentication
-const protectedRoutes = ["/museboard", "/dashboard", "/trash"];
+const protectedRoutes = ["/museboard", "/dashboard", "/trash", "/onboarding"];
 
 // Define public routes that don't require authentication
 const publicRoutes = ["/", "/sign-in", "/sign-up", "/forgot-password"];
@@ -47,15 +49,41 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // If user is authenticated and trying to access auth routes
-  if (user && isAuthRoute) {
-    // Check if there's a redirect parameter
-    const redirectTo = request.nextUrl.searchParams.get("redirectTo");
-    if (redirectTo) {
-      return NextResponse.redirect(new URL(redirectTo, request.url));
+  // If user is authenticated, check onboarding status
+  if (user) {
+    // Check if user has completed onboarding
+    const { data: mission } = await supabase
+      .from("user_missions")
+      .select("onboarding_completed")
+      .eq("user_id", user.id)
+      .single();
+
+    const hasCompletedOnboarding = mission?.onboarding_completed;
+
+    // If user hasn't completed onboarding and isn't on onboarding page
+    if (!hasCompletedOnboarding && pathname !== "/onboarding") {
+      // Don't redirect if they're on auth routes (let them sign out if needed)
+      if (!isAuthRoute) {
+        return NextResponse.redirect(new URL("/onboarding", request.url));
+      }
     }
-    // Default redirect to museboard for authenticated users
-    return NextResponse.redirect(new URL("/museboard", request.url));
+
+    // If user has completed onboarding and is trying to access onboarding
+    if (hasCompletedOnboarding && pathname === "/onboarding") {
+      return NextResponse.redirect(new URL("/museboard", request.url));
+    }
+
+    // If user is authenticated and trying to access auth routes
+    if (isAuthRoute) {
+      // Check if there's a redirect parameter
+      const redirectTo = request.nextUrl.searchParams.get("redirectTo");
+      if (redirectTo) {
+        return NextResponse.redirect(new URL(redirectTo, request.url));
+      }
+      // Default redirect based on onboarding status
+      const defaultRedirect = hasCompletedOnboarding ? "/museboard" : "/onboarding";
+      return NextResponse.redirect(new URL(defaultRedirect, request.url));
+    }
   }
 
   return response;

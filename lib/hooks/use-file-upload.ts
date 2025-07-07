@@ -1,3 +1,5 @@
+// lib/hooks/use-file-upload.ts
+
 "use client";
 
 import { useState, useCallback } from "react";
@@ -15,7 +17,6 @@ export interface FileUploadState {
 
 export interface FileUploadOptions {
   bucket?: string;
-  folder?: string;
   maxSizeBytes?: number;
   allowedTypes?: string[];
   onProgress?: (progress: number) => void;
@@ -25,9 +26,19 @@ export interface FileUploadOptions {
 
 const DEFAULT_OPTIONS: Required<FileUploadOptions> = {
   bucket: "muse-files",
-  folder: "uploads",
   maxSizeBytes: 10 * 1024 * 1024, // 10MB
-  allowedTypes: ["image/jpeg", "image/png", "image/gif", "image/webp"],
+  allowedTypes: [
+    "image/jpeg", 
+    "image/jpg", 
+    "image/png", 
+    "image/gif", 
+    "image/webp",
+    "image/svg+xml",
+    // Add video types for future use
+    "video/mp4",
+    "video/webm",
+    "video/quicktime"
+  ],
   onProgress: () => {},
   onSuccess: () => {},
   onError: () => {},
@@ -79,10 +90,17 @@ export function useFileUpload(options: FileUploadOptions = {}) {
     });
 
     try {
-      // Generate unique filename
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        throw new Error("You must be logged in to upload files");
+      }
+
+      // Generate unique filename with user folder structure
       const fileExt = file.name.split(".").pop();
-      const fileName = `${uuidv4()}.${fileExt}`;
-      const filePath = `${config.folder}/${fileName}`;
+      const fileName = `${Date.now()}-${uuidv4()}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`; // User-specific folder structure
 
       // Upload file to Supabase Storage
       const { data, error } = await supabase.storage
@@ -109,13 +127,13 @@ export function useFileUpload(options: FileUploadOptions = {}) {
         progress: 100,
         error: null,
         uploadedUrl: publicUrl,
-        fileName: filePath,
+        fileName: filePath, // Return the full path
       });
 
       toast.success("File uploaded successfully!");
       config.onSuccess(publicUrl, filePath);
       
-      return filePath;
+      return filePath; // Return the full path for database storage
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Upload failed";
       

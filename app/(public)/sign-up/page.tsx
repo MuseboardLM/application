@@ -1,4 +1,4 @@
-// app/sign-up/page.tsx
+// app/(public)/sign-up/page.tsx
 
 import { AuthCard } from "@/components/auth/auth-card";
 import { SignUpForm } from "@/components/auth/signup-form";

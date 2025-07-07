@@ -1,3 +1,5 @@
+// components/museboard/MuseItemCard.tsx
+
 "use client";
 
 import { useRef, useCallback, useState } from "react";
@@ -38,7 +40,9 @@ export default function MuseItemCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isDropdownInteraction = useRef(false);
+  const mousePosition = useRef({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const handleMouseEnter = () => {
     if (!isSelectionMode) {
@@ -46,8 +50,62 @@ export default function MuseItemCard({
     }
   };
 
-  const handleMouseLeave = () => {
+  const handleMouseMove = (e: React.MouseEvent) => {
+    mousePosition.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const handleMouseLeave = (e: React.MouseEvent) => {
+    // Don't reset hover state if dropdown is open
+    if (isDropdownOpen) {
+      return;
+    }
+    
+    // Check if we're moving to the dropdown menu content
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    if (relatedTarget) {
+      try {
+        if (
+          dropdownRef.current?.contains(relatedTarget) ||
+          relatedTarget.closest('[data-radix-popper-content-wrapper]') ||
+          relatedTarget.closest('[role="menu"]')
+        ) {
+          return;
+        }
+      } catch (error) {
+        // If DOM operations fail (e.g., during component updates), safely continue
+        console.warn('DOM operation failed in handleMouseLeave:', error);
+      }
+    }
+    
     setIsHovered(false);
+  };
+
+  const isMouseOverCard = () => {
+    if (!cardRef.current) return false;
+    
+    const rect = cardRef.current.getBoundingClientRect();
+    const { x: mouseX, y: mouseY } = mousePosition.current;
+    
+    return (
+      mouseX >= rect.left &&
+      mouseX <= rect.right &&
+      mouseY >= rect.top &&
+      mouseY <= rect.bottom
+    );
+  };
+
+  const handleDropdownOpenChange = (open: boolean) => {
+    setIsDropdownOpen(open);
+    
+    // When dropdown closes, check if mouse is still over the card
+    if (!open) {
+      // Small delay to allow for mouse position check
+      setTimeout(() => {
+        if (!isMouseOverCard()) {
+          setIsHovered(false);
+        }
+      }, 10);
+    }
   };
 
   const handleCardClick = useCallback((event: React.MouseEvent | React.TouchEvent) => {
@@ -73,22 +131,25 @@ export default function MuseItemCard({
   const isImageType = item.content_type === "image" || item.content_type === "screenshot";
   const isTextType = item.content_type === "text";
 
+  // Keep hover state active if dropdown is open
+  const shouldShowHoverEffects = (isHovered || isDropdownOpen) && !isSelectionMode;
+
   return (
     <motion.div
       ref={cardRef}
       {...longPressEvents}
       onMouseEnter={handleMouseEnter}
+      onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       style={{
-        zIndex: isHovered ? 50 : 1,
+        zIndex: shouldShowHoverEffects ? 50 : 1,
         position: "relative",
       }}
       initial={{ opacity: 0, y: 50 }}
       animate={{
         opacity: 1,
-        y: isHovered ? 0 : [-2, 2],
-        // ✨ SUGGESTION 1: Increased magnification scale for text cards from 1.7 to 2.0
-        scale: isHovered && !isSelectionMode ? (isTextType ? 2.0 : 1.15) : 1,
+        y: shouldShowHoverEffects ? 0 : [-2, 2],
+        scale: shouldShowHoverEffects ? (isTextType ? 2.0 : 1.15) : 1,
       }}
       transition={{
         y: {
@@ -104,11 +165,11 @@ export default function MuseItemCard({
       className={cn(
         "group relative mb-4 p-1 bg-transparent border-none will-change-transform [break-inside:avoid] user-select-none",
         !isSelectionMode && "cursor-pointer",
-        isHovered && !isSelectionMode && "muse-card-magnified"
+        shouldShowHoverEffects && "muse-card-magnified"
       )}
     >
       <AnimatePresence>
-        {isHovered && !isSelectionMode && (
+        {shouldShowHoverEffects && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -124,11 +185,11 @@ export default function MuseItemCard({
         className={cn(
           "h-full w-full rounded-lg bg-zinc-900 overflow-hidden flex flex-col transition-shadow duration-400 ease-out",
           "shadow-[0_40px_80px_-20px_rgba(0,0,0,0.5)]",
-          isHovered && !isSelectionMode && "shadow-[0_0_60px_var(--glow),0_0_120px_var(--glow)] ring-2 ring-white/20"
+          shouldShowHoverEffects && "shadow-[0_0_60px_var(--glow),0_0_120px_var(--glow)] ring-2 ring-white/20"
         )}
         style={{
           position: "relative",
-          zIndex: isHovered ? 50 : 1
+          zIndex: shouldShowHoverEffects ? 50 : 1
         }}
       >
         <AnimatePresence>
@@ -159,13 +220,13 @@ export default function MuseItemCard({
           ref={dropdownRef}
           className={cn(
             "absolute top-2 right-2 z-20 transition-opacity duration-200",
-            isHovered && !isSelectionMode ? "opacity-100" : "opacity-0 md:group-hover:opacity-100"
+            shouldShowHoverEffects ? "opacity-100" : "opacity-0 md:group-hover:opacity-100"
           )}
           onMouseDown={() => { isDropdownInteraction.current = true; }}
           onTouchStart={() => { isDropdownInteraction.current = true; }}
         >
           {!isSelectionMode && (
-            <DropdownMenu>
+            <DropdownMenu onOpenChange={handleDropdownOpenChange}>
               <DropdownMenuTrigger asChild>
                 <button
                   className="p-1.5 rounded-full bg-black/40 text-zinc-300 hover:bg-black/60 hover:text-white transition-all cursor-pointer"
@@ -178,6 +239,14 @@ export default function MuseItemCard({
                 align="end"
                 className="w-40"
                 onCloseAutoFocus={(e) => e.preventDefault()}
+                onEscapeKeyDown={() => {
+                  // When escape is pressed, ensure we maintain hover state if mouse is still over card
+                  setTimeout(() => {
+                    if (!isMouseOverCard()) {
+                      setIsHovered(false);
+                    }
+                  }, 10);
+                }}
               >
                 <DropdownMenuItem
                   className="cursor-pointer"
@@ -219,15 +288,12 @@ export default function MuseItemCard({
         )}
 
         {!isImageType && (
-          // Container div is back to a simple relative block
           <div className="p-5 flex-grow relative">
             {isSelectionMode && <div className={cn("absolute inset-0 bg-black/30 z-10 transition-opacity", !isSelected && "bg-black/60")} />}
             <p className={cn(
               "transition-all duration-300 ease-out",
               "whitespace-pre-wrap",
-              // The max-width constraint has been removed
-              isHovered && !isSelectionMode 
-                // ✨ SUGGESTION 2: Calibrated font size to work with the new 2.0x scale
+              shouldShowHoverEffects
                 ? "text-white text-lg leading-relaxed font-normal" 
                 : "text-base text-zinc-300 leading-relaxed"
             )}>

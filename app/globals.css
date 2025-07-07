@@ -325,7 +325,63 @@
        border-radius: inherit;
        pointer-events: none;
      }
+
+     /* SIMPLIFIED Chat input gradient that actually works */
+     .chat-input-gradient {
+       background: linear-gradient(135deg, 
+         rgba(255, 255, 255, 0.08) 0%, 
+         rgba(255, 255, 255, 0.03) 50%, 
+         rgba(255, 255, 255, 0.08) 100%
+       );
+       backdrop-filter: blur(16px);
+       border: 1px solid rgba(255, 255, 255, 0.12);
+       box-shadow: 
+         inset 0 1px 0 rgba(255, 255, 255, 0.1),
+         0 1px 3px rgba(0, 0, 0, 0.1);
+       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+     }
+
+     .chat-input-gradient:focus-within {
+       background: linear-gradient(135deg, 
+         rgba(255, 255, 255, 0.12) 0%, 
+         rgba(255, 255, 255, 0.06) 50%, 
+         rgba(255, 255, 255, 0.12) 100%
+       );
+       border-color: rgba(255, 255, 255, 0.3);
+       box-shadow: 
+         inset 0 1px 0 rgba(255, 255, 255, 0.2),
+         0 0 0 1px rgba(255, 255, 255, 0.1),
+         0 8px 32px rgba(255, 255, 255, 0.05);
+     }
+
+     /* Send button gradient */
+     .send-button-gradient {
+       background: linear-gradient(135deg, 
+         rgba(255, 255, 255, 1) 0%, 
+         rgba(255, 255, 255, 0.9) 100%
+       );
+       color: #000;
+       box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1);
+       transition: all 0.2s ease;
+     }
+
+     .send-button-gradient:hover:not(:disabled) {
+       background: linear-gradient(135deg, 
+         rgba(255, 255, 255, 0.9) 0%, 
+         rgba(255, 255, 255, 0.8) 100%
+       );
+       box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15);
+       transform: scale(1.05);
+     }
+
+     .send-button-gradient:disabled {
+       opacity: 0.5;
+       cursor: not-allowed;
+       transform: scale(1);
+       box-shadow: 0 2px 8px rgba(255, 255, 255, 0.05);
+     }
    }
+   
 
    /* ---------- Accessibility and reduced motion -------------------- */
    @media (prefers-reduced-motion: reduce) {
@@ -336,6 +392,18 @@
      
      .muse-card-magnified:hover {
        animation: none !important;
+     }
+
+     .chat-input-gradient {
+       transition: all 0.1s ease !important;
+     }
+
+     .send-button-gradient {
+       transition: all 0.1s ease !important;
+     }
+
+     .send-button-gradient:hover:not(:disabled) {
+       transform: none !important;
      }
 
      /* Disable floating animation for reduced motion */

@@ -16,7 +16,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import MuseItemModal from "./MuseItemModal";
 import { useMuseItems } from "@/lib/hooks/use-muse-items";
-import { useFileUpload } from "@/lib/hooks/use-file-upload";
+import { uploadFileToMuseboardAction, addContentToMuseboardAction } from "@/lib/actions/mission";
 
 interface MuseboardClientWrapperProps {
   initialMuseItems: MuseItem[];
@@ -32,6 +32,26 @@ const isUrl = (text: string): boolean => {
   }
 };
 
+// Helper function to get image dimensions from a file
+const getImageDimensions = (file: File): Promise<{ width: number; height: number }> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    };
+    
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Failed to load image'));
+    };
+    
+    img.src = url;
+  });
+};
+
 export default function MuseboardClientWrapper({
   initialMuseItems,
   user,
@@ -44,34 +64,13 @@ export default function MuseboardClientWrapper({
     selection,
   } = useMuseItems({ initialItems: initialMuseItems });
 
-  const fileUpload = useFileUpload({
-    onSuccess: (url, fileName) => {
-      // Create new muse item with uploaded file
-      const newItem: MuseItem = {
-        id: uuidv4(),
-        user_id: user.id,
-        created_at: new Date().toISOString(),
-        content: fileName,
-        content_type: "image",
-        description: null,
-        source_url: null,
-        ai_categories: null,
-        ai_clusters: null,
-        deleted_at: null,
-        signedUrl: url,
-      };
-      actions.addItem(newItem);
-    },
-    onError: (error) => {
-      toast.error("Upload failed", { description: error });
-    },
-  });
-
-  const supabase = createClient();
   const museboardContainerRef = useRef<HTMLDivElement>(null);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
   const [enlargedItemIndex, setEnlargedItemIndex] = useState<number | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const supabase = createClient();
 
   const updateColumnCount = useCallback(() => {
     const el = museboardContainerRef.current;
@@ -121,45 +120,117 @@ export default function MuseboardClientWrapper({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [enlargedItemIndex, isSelectionMode, handleNavigateNext, handleNavigatePrev]);
 
-  const handleAddItem = async (
+  // Handle file uploads using server action
+  const handleFileUpload = async (file: File) => {
+    setIsUploading(true);
+    
+    try {
+      // Get image dimensions first for proper display
+      let imageDimensions = { width: 500, height: 500 }; // defaults
+      
+      try {
+        if (file.type.startsWith('image/')) {
+          imageDimensions = await getImageDimensions(file);
+        }
+      } catch (error) {
+        console.warn('Could not get image dimensions, using defaults:', error);
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("contentType", "image");
+      formData.append("description", "Uploaded from museboard");
+
+      const result = await uploadFileToMuseboardAction(formData);
+
+      if (result.success && result.data) {
+        // Generate a signed URL for immediate display
+        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+          .from("muse-files")
+          .createSignedUrl(result.data.filePath, 60 * 5); // 5 minutes
+
+        if (signedUrlError) {
+          console.error("Error creating signed URL:", signedUrlError);
+          toast.error("File uploaded but failed to display. Please refresh the page.");
+          return;
+        }
+
+        toast.success("File uploaded successfully!");
+        
+        // Optimistically add the item to the UI with proper signed URL
+        const newItem: MuseItem = {
+          id: uuidv4(),
+          user_id: user.id,
+          created_at: new Date().toISOString(),
+          content: result.data.filePath,
+          content_type: "image",
+          description: "Uploaded from museboard",
+          source_url: null,
+          ai_categories: null,
+          ai_clusters: null,
+          deleted_at: null,
+          image_width: imageDimensions.width,
+          image_height: imageDimensions.height,
+          signedUrl: signedUrlData.signedUrl, // Use the signed URL, not public URL
+        };
+        
+        actions.addItem(newItem);
+      } else {
+        toast.error(result.error || "Failed to upload file");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Failed to upload file");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Handle text/link content using server action
+  const handleAddContent = async (
     content: string,
-    contentType: MuseItem['content_type'],
+    contentType: "text" | "link",
     options: { description?: string; sourceUrl?: string } = {}
   ) => {
-    const newItem: MuseItem = {
-      id: uuidv4(),
-      user_id: user.id,
-      created_at: new Date().toISOString(),
-      content,
-      content_type: contentType,
-      description: options.description || null,
-      source_url: options.sourceUrl || null,
-      ai_categories: null,
-      ai_clusters: null,
-      deleted_at: null,
-    };
+    try {
+      const result = await addContentToMuseboardAction(content, contentType, options);
 
-    // Add to database
-    const { error } = await supabase
-      .from("muse_items")
-      .insert([newItem]);
-
-    if (error) {
-      toast.error("Failed to add item", { description: error.message });
-      return;
+      if (result.success) {
+        toast.success(`${contentType === "link" ? "Link" : "Text"} added successfully!`);
+        
+        // Optimistically add the item to the UI
+        const newItem: MuseItem = {
+          id: uuidv4(),
+          user_id: user.id,
+          created_at: new Date().toISOString(),
+          content,
+          content_type: contentType,
+          description: options.description || null,
+          source_url: options.sourceUrl || null,
+          ai_categories: null,
+          ai_clusters: null,
+          deleted_at: null,
+          image_width: null, // Not applicable for text/link
+          image_height: null, // Not applicable for text/link
+        };
+        
+        actions.addItem(newItem);
+      } else {
+        toast.error(result.error || `Failed to add ${contentType}`);
+      }
+    } catch (error) {
+      console.error("Add content error:", error);
+      toast.error(`Failed to add ${contentType}`);
     }
-
-    // Add to local state using the hook
-    actions.addItem(newItem);
   };
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
 
     for (const file of acceptedFiles) {
-      await fileUpload.uploadFile(file);
+      await handleFileUpload(file);
     }
-  }, [fileUpload]);
+  }, []);
   
   useEffect(() => {
     const handlePaste = (event: ClipboardEvent) => {
@@ -173,16 +244,16 @@ export default function MuseboardClientWrapper({
             // Handle pasted images
             const file = item.getAsFile();
             if (file) {
-              fileUpload.uploadFile(file);
+              handleFileUpload(file);
             }
           } else if (item.type === 'text/plain') {
             // Handle pasted text/links
             item.getAsString((text) => {
               if (text.trim()) {
                 if (isUrl(text)) {
-                  handleAddItem(text, 'link', { sourceUrl: text });
+                  handleAddContent(text, 'link', { sourceUrl: text });
                 } else {
-                  handleAddItem(text, 'text');
+                  handleAddContent(text, 'text');
                 }
               }
             });
@@ -193,11 +264,15 @@ export default function MuseboardClientWrapper({
     
     window.addEventListener('paste', handlePaste);
     return () => window.removeEventListener('paste', handlePaste);
-  }, [fileUpload, handleAddItem]);
+  }, []);
 
   const { getRootProps, getInputProps, isDragActive, open: openFileDialog } = useDropzone({
     onDrop,
-    accept: { "image/*": [".jpeg", ".jpg", ".png", ".gif", ".webp"] },
+    accept: { 
+      "image/*": [".jpeg", ".jpg", ".png", ".gif", ".webp", ".svg"],
+      // Add video support for future
+      "video/*": [".mp4", ".webm", ".mov"]
+    },
     noClick: true,
     noKeyboard: true,
   });
@@ -329,11 +404,11 @@ export default function MuseboardClientWrapper({
       />
 
       {/* Upload Progress Indicator */}
-      {fileUpload.isUploading && (
+      {isUploading && (
         <div className="fixed bottom-4 right-4 bg-background border rounded-lg p-4 shadow-lg z-40">
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-            <span className="text-sm">Uploading... {fileUpload.progress}%</span>
+            <span className="text-sm">Uploading...</span>
           </div>
         </div>
       )}
