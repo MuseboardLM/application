@@ -1,3 +1,5 @@
+// components/ErrorBoundary.tsx
+
 "use client";
 
 import { Component, ErrorInfo, ReactNode } from "react";

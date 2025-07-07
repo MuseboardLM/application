@@ -1,10 +1,9 @@
-// lib/actions/mission.ts
-
 "use server";
 
 import { createServer } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { v4 as uuidv4 } from "uuid";
 
 const MissionSchema = z.object({
   mission_statement: z.string().min(10, "Please share at least 10 characters about your mission"),
@@ -14,6 +13,7 @@ export type MissionResult = {
   success: boolean;
   error?: string;
   fieldErrors?: Record<string, string>;
+  data?: any;
 };
 
 /**
@@ -223,152 +223,194 @@ export async function completeOnboardingAction(): Promise<MissionResult> {
 }
 
 /**
- * Upload file for museboard (general purpose)
+ * Enhanced upload action with compression and thumbnail generation
  */
-export async function uploadFileToMuseboardAction(
-  formData: FormData
-): Promise<MissionResult & { data?: { filePath: string; publicUrl: string } }> {
+export async function uploadFileToMuseboardAction(formData: FormData) {
+  const supabase = createServer();
+
   try {
-    const supabase = createServer();
-    
-    // Get current user
+    // Check authentication
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     
     if (userError || !user) {
-      return {
-        success: false,
-        error: "You must be logged in to upload files",
-      };
+      return { success: false, error: "You must be logged in to upload files" };
     }
 
     const file = formData.get("file") as File;
-    const contentType = formData.get("contentType") as string || "image";
-    const description = formData.get("description") as string || null;
-    const sourceUrl = formData.get("sourceUrl") as string || null;
+    const contentType = formData.get("contentType") as string;
+    const description = formData.get("description") as string;
+    const imageWidth = formData.get("imageWidth") as string;
+    const imageHeight = formData.get("imageHeight") as string;
 
     if (!file) {
-      return {
-        success: false,
-        error: "No file provided",
-      };
+      return { success: false, error: "No file provided" };
     }
 
-    // Generate unique filename with user folder structure
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+    // Validate file type
+    const allowedTypes = [
+      "image/jpeg", "image/jpg", "image/png", "image/gif", 
+      "image/webp", "image/svg+xml",
+      "video/mp4", "video/webm", "video/quicktime"
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      return { success: false, error: "File type not supported" };
+    }
+
+    // Validate file size (max 10MB for original file)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      return { success: false, error: "File size must be less than 10MB" };
+    }
+
+    // Generate unique filename
+    const fileExt = file.name.split(".").pop();
+    const timestamp = Date.now();
+    const uniqueId = uuidv4().split('-')[0]; // Shorter unique ID
+    const fileName = `${timestamp}-${uniqueId}.${fileExt}`;
+    
+    // Create user-specific file path
     const filePath = `${user.id}/${fileName}`;
 
-    // Upload to Supabase storage with user folder structure
-    const { error: uploadError } = await supabase.storage
-      .from("muse-files")
-      .upload(filePath, file);
-
-    if (uploadError) {
-      console.error("Storage upload error:", uploadError);
-      return {
-        success: false,
-        error: `Failed to upload file: ${uploadError.message}`,
-      };
-    }
-
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from("muse-files")
-      .getPublicUrl(filePath);
-
-    // Add to muse_items table
-    const { error: dbError } = await supabase
-      .from("muse_items")
-      .insert({
-        user_id: user.id,
-        content: filePath,
-        content_type: contentType as any,
-        description,
-        source_url: sourceUrl,
-      });
-
-    if (dbError) {
-      console.error("Database insert error:", dbError);
-      
-      // Clean up the uploaded file if database insert fails
-      await supabase.storage
+    try {
+      // Upload original file to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from("muse-files")
-        .remove([filePath]);
-      
+        .upload(filePath, file, {
+          upsert: false,
+          cacheControl: "31536000", // 1 year cache (longer than before)
+        });
+
+      if (uploadError) {
+        throw new Error(`Upload failed: ${uploadError.message}`);
+      }
+
+      // Parse image dimensions (provided from client-side)
+      const dimensions = {
+        width: imageWidth ? parseInt(imageWidth) : null,
+        height: imageHeight ? parseInt(imageHeight) : null,
+      };
+
+      // Insert record into database
+      const { data: insertData, error: insertError } = await supabase
+        .from("muse_items")
+        .insert({
+          user_id: user.id,
+          content: filePath, // Store the file path
+          content_type: contentType,
+          description: description || null,
+          image_width: dimensions.width,
+          image_height: dimensions.height,
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        // If database insert fails, clean up the uploaded file
+        await supabase.storage.from("muse-files").remove([filePath]);
+        throw new Error(`Database insert failed: ${insertError.message}`);
+      }
+
+      revalidatePath("/museboard");
+
       return {
-        success: false,
-        error: `Failed to save file record: ${dbError.message}`,
+        success: true,
+        data: {
+          id: insertData.id,
+          filePath: filePath,
+          dimensions: dimensions,
+        },
+      };
+
+    } catch (storageError) {
+      console.error("Storage/Database error:", storageError);
+      return { 
+        success: false, 
+        error: storageError instanceof Error ? storageError.message : "Upload failed"
       };
     }
 
-    revalidatePath("/museboard");
-    
-    return {
-      success: true,
-      data: {
-        filePath,
-        publicUrl: urlData.publicUrl,
-      },
-    };
   } catch (error) {
-    console.error("Unexpected error in uploadFileToMuseboardAction:", error);
+    console.error("Upload action error:", error);
     return {
       success: false,
-      error: "An unexpected error occurred while uploading",
+      error: error instanceof Error ? error.message : "An unexpected error occurred",
     };
   }
 }
 
 /**
- * Add text or link content to museboard
+ * Enhanced content addition with better validation
  */
 export async function addContentToMuseboardAction(
   content: string,
   contentType: "text" | "link",
   options: { description?: string; sourceUrl?: string } = {}
-): Promise<MissionResult> {
+) {
+  const supabase = createServer();
+
   try {
-    const supabase = createServer();
-    
-    // Get current user
+    // Check authentication
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     
     if (userError || !user) {
-      return {
-        success: false,
-        error: "You must be logged in to add content",
-      };
+      return { success: false, error: "You must be logged in to add content" };
     }
 
-    // Add to muse_items table
-    const { error: dbError } = await supabase
+    // Validate content
+    if (!content || content.trim().length === 0) {
+      return { success: false, error: "Content cannot be empty" };
+    }
+
+    // Validate content length (reasonable limits)
+    if (content.length > 10000) { // 10k characters max
+      return { success: false, error: "Content is too long (max 10,000 characters)" };
+    }
+
+    // For links, validate URL format
+    if (contentType === "link") {
+      try {
+        new URL(content);
+      } catch {
+        return { success: false, error: "Invalid URL format" };
+      }
+    }
+
+    // Insert record into database
+    const { data: insertData, error: insertError } = await supabase
       .from("muse_items")
       .insert({
         user_id: user.id,
-        content,
+        content: content.trim(),
         content_type: contentType,
-        description: options.description || null,
-        source_url: options.sourceUrl || null,
-      });
+        description: options.description?.trim() || null,
+        source_url: options.sourceUrl?.trim() || null,
+        image_width: null, // Not applicable for text/link
+        image_height: null, // Not applicable for text/link
+      })
+      .select()
+      .single();
 
-    if (dbError) {
-      console.error("Database insert error:", dbError);
-      return {
-        success: false,
-        error: `Failed to save content: ${dbError.message}`,
-      };
+    if (insertError) {
+      throw new Error(`Database insert failed: ${insertError.message}`);
     }
 
     revalidatePath("/museboard");
-    
+
     return {
       success: true,
+      data: {
+        id: insertData.id,
+        content: insertData.content,
+        contentType: insertData.content_type,
+      },
     };
+
   } catch (error) {
-    console.error("Unexpected error in addContentToMuseboardAction:", error);
+    console.error("Add content action error:", error);
     return {
       success: false,
-      error: "An unexpected error occurred while saving content",
+      error: error instanceof Error ? error.message : "An unexpected error occurred",
     };
   }
 }

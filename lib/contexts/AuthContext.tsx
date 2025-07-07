@@ -1,8 +1,10 @@
+// lib/contexts/AuthContext.tsx
+
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { User, Session } from "@supabase/auth-helpers-nextjs";
+import type { User, Session } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 
 interface AuthContextType {

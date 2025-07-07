@@ -1,3 +1,5 @@
+// components/museboard/MuseItemModal.tsx
+
 "use client";
 
 import Image from "next/image";

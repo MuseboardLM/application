@@ -11,12 +11,19 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { UploadCloudIcon, XIcon, Trash2Icon } from "lucide-react";
-import MuseboardFAB from "./MuseboardFAB";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import MuseItemModal from "./MuseItemModal";
 import { useMuseItems } from "@/lib/hooks/use-muse-items";
 import { uploadFileToMuseboardAction, addContentToMuseboardAction } from "@/lib/actions/mission";
+import { 
+  compressImage, 
+  getImageDimensions, 
+  createThumbnail,
+  supportsCompression,
+  formatFileSize,
+  getCompressionRatio
+} from "@/lib/utils/image-compression";
 
 interface MuseboardClientWrapperProps {
   initialMuseItems: MuseItem[];
@@ -30,26 +37,6 @@ const isUrl = (text: string): boolean => {
   } catch (_) {
     return false;
   }
-};
-
-// Helper function to get image dimensions from a file
-const getImageDimensions = (file: File): Promise<{ width: number; height: number }> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve({ width: img.naturalWidth, height: img.naturalHeight });
-    };
-    
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('Failed to load image'));
-    };
-    
-    img.src = url;
-  });
 };
 
 export default function MuseboardClientWrapper({
@@ -69,6 +56,7 @@ export default function MuseboardClientWrapper({
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
   const [enlargedItemIndex, setEnlargedItemIndex] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const supabase = createClient();
 
@@ -120,34 +108,66 @@ export default function MuseboardClientWrapper({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [enlargedItemIndex, isSelectionMode, handleNavigateNext, handleNavigatePrev]);
 
-  // Handle file uploads using server action
+  // Enhanced file upload with compression
   const handleFileUpload = async (file: File) => {
     setIsUploading(true);
+    setUploadProgress(0);
     
     try {
+      // Log original file size
+      const originalSize = file.size;
+      console.log(`Original file size: ${formatFileSize(originalSize)}`);
+
       // Get image dimensions first for proper display
       let imageDimensions = { width: 500, height: 500 }; // defaults
+      let processedFile = file;
       
       try {
         if (file.type.startsWith('image/')) {
+          // Get original dimensions
           imageDimensions = await getImageDimensions(file);
+          setUploadProgress(20);
+
+          // Compress image if it supports compression
+          if (supportsCompression(file)) {
+            console.log('Compressing image...');
+            processedFile = await compressImage(file, {
+              maxSizeMB: 1.2, // Allow slightly larger files (1.2MB instead of 800KB)
+              maxWidthOrHeight: 1920,
+              quality: 0.9, // Increased from 0.8 to 0.9 (90% quality)
+            });
+            
+            const compressionRatio = getCompressionRatio(originalSize, processedFile.size);
+            console.log(`Compressed file size: ${formatFileSize(processedFile.size)} (${compressionRatio}% reduction)`);
+            
+            if (compressionRatio > 10) { // Only show toast if significant compression
+              toast.success(`Image compressed by ${compressionRatio}%`);
+            }
+            
+            setUploadProgress(60);
+          }
         }
       } catch (error) {
-        console.warn('Could not get image dimensions, using defaults:', error);
+        console.warn('Could not process image, using original:', error);
+        // Continue with original file if processing fails
       }
 
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", processedFile);
       formData.append("contentType", "image");
       formData.append("description", "Uploaded from museboard");
+      formData.append("imageWidth", imageDimensions.width.toString());
+      formData.append("imageHeight", imageDimensions.height.toString());
+
+      setUploadProgress(80);
 
       const result = await uploadFileToMuseboardAction(formData);
 
       if (result.success && result.data) {
-        // Generate a signed URL for immediate display
+        // Generate a signed URL for immediate display with longer expiry
         const { data: signedUrlData, error: signedUrlError } = await supabase.storage
           .from("muse-files")
-          .createSignedUrl(result.data.filePath, 60 * 5); // 5 minutes
+          .createSignedUrl(result.data.filePath, 60 * 60 * 2); // 2 hours instead of 5 minutes
 
         if (signedUrlError) {
           console.error("Error creating signed URL:", signedUrlError);
@@ -155,6 +175,7 @@ export default function MuseboardClientWrapper({
           return;
         }
 
+        setUploadProgress(100);
         toast.success("File uploaded successfully!");
         
         // Optimistically add the item to the UI with proper signed URL
@@ -171,7 +192,7 @@ export default function MuseboardClientWrapper({
           deleted_at: null,
           image_width: imageDimensions.width,
           image_height: imageDimensions.height,
-          signedUrl: signedUrlData.signedUrl, // Use the signed URL, not public URL
+          signedUrl: signedUrlData.signedUrl,
         };
         
         actions.addItem(newItem);
@@ -183,6 +204,7 @@ export default function MuseboardClientWrapper({
       toast.error("Failed to upload file");
     } finally {
       setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -210,8 +232,8 @@ export default function MuseboardClientWrapper({
           ai_categories: null,
           ai_clusters: null,
           deleted_at: null,
-          image_width: null, // Not applicable for text/link
-          image_height: null, // Not applicable for text/link
+          image_width: null,
+          image_height: null,
         };
         
         actions.addItem(newItem);
@@ -227,6 +249,7 @@ export default function MuseboardClientWrapper({
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
 
+    // Process files sequentially to avoid overwhelming the system
     for (const file of acceptedFiles) {
       await handleFileUpload(file);
     }
@@ -266,7 +289,7 @@ export default function MuseboardClientWrapper({
     return () => window.removeEventListener('paste', handlePaste);
   }, []);
 
-  const { getRootProps, getInputProps, isDragActive, open: openFileDialog } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: { 
       "image/*": [".jpeg", ".jpg", ".png", ".gif", ".webp", ".svg"],
@@ -336,7 +359,7 @@ export default function MuseboardClientWrapper({
           <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted bg-muted/20 py-20 text-center">
             <h3 className="mt-4 text-lg font-semibold">Your Museboard is empty</h3>
             <p className="mt-2 mb-4 text-sm text-muted-foreground">
-              Drag & drop images, paste links, or use the + button to add your first inspiration.
+              Drag & drop images or paste content anywhere to add your first inspiration.
             </p>
           </div>
         )}
@@ -347,13 +370,6 @@ export default function MuseboardClientWrapper({
           <UploadCloudIcon className="mx-auto h-12 w-12 text-primary animate-bounce" />
           <p className="mt-4 text-lg font-medium">Drop to upload</p>
         </div>
-      )}
-      
-      {!isSelectionMode && (
-        <MuseboardFAB
-          onUploadClick={openFileDialog}
-          onPasteLinkClick={() => toast.info("Just paste anywhere on the page!")}
-        />
       )}
 
       {/* Selection action bar */}
@@ -403,12 +419,20 @@ export default function MuseboardClientWrapper({
         hasPrev={enlargedItemIndex !== null && enlargedItemIndex > 0}
       />
 
-      {/* Upload Progress Indicator */}
+      {/* Enhanced Upload Progress Indicator */}
       {isUploading && (
-        <div className="fixed bottom-4 right-4 bg-background border rounded-lg p-4 shadow-lg z-40">
-          <div className="flex items-center gap-2">
+        <div className="fixed bottom-4 right-4 bg-background border rounded-lg p-4 shadow-lg z-40 min-w-[200px]">
+          <div className="flex items-center gap-3">
             <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-            <span className="text-sm">Uploading...</span>
+            <div className="flex-1">
+              <div className="text-sm font-medium">Uploading...</div>
+              <div className="w-full bg-zinc-200 rounded-full h-1.5 mt-1">
+                <div 
+                  className="bg-primary h-1.5 rounded-full transition-all duration-300" 
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       )}

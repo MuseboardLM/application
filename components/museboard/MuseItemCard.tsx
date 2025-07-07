@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useRef, useCallback, useState } from "react";
+import React, { useRef, useCallback, useState, useEffect } from "react";
 import Image from "next/image";
 import { MuseItem } from "@/app/(private)/museboard/page";
 import { Link2Icon, MoreVertical, Trash2, CheckSquare, Check } from "lucide-react";
@@ -26,6 +26,106 @@ interface MuseItemCardProps {
   onDelete: () => void;
   onEnlarge: () => void;
 }
+
+// Progressive image component with thumbnail support
+const ProgressiveImage = ({ 
+  src, 
+  alt, 
+  width, 
+  height, 
+  className,
+  priority = false 
+}: {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+  className?: string;
+  priority?: boolean;
+}) => {
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [isInView, setIsInView] = useState(priority); // Load immediately if priority
+  const imgRef = useRef<HTMLDivElement>(null);
+
+  // Intersection Observer for lazy loading
+  const handleIntersection = useCallback((entries: IntersectionObserverEntry[]) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        setIsInView(true);
+      }
+    });
+  }, []);
+
+  // Set up intersection observer
+  useEffect(() => {
+    if (priority || isInView) return; // Skip if already loading
+
+    const observer = new IntersectionObserver(handleIntersection, {
+      rootMargin: '100px', // Start loading 100px before entering viewport
+    });
+
+    const currentRef = imgRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+    };
+  }, [handleIntersection, priority, isInView]);
+
+  if (imageError) {
+    return (
+      <div 
+        ref={imgRef}
+        className={cn("bg-zinc-800 flex items-center justify-center text-zinc-500", className)}
+        style={{ width, height }}
+      >
+        Failed to load image
+      </div>
+    );
+  }
+
+  return (
+    <div ref={imgRef} className="relative">
+      {/* Placeholder while loading */}
+      {!imageLoaded && (
+        <div 
+          className={cn("bg-zinc-800 animate-pulse", className)}
+          style={{ width, height }}
+        />
+      )}
+      
+      {/* Actual image - only load when in view */}
+      {isInView && (
+        <Image
+          src={src}
+          alt={alt}
+          width={width}
+          height={height}
+          className={cn(
+            "transition-opacity duration-300",
+            imageLoaded ? "opacity-100" : "opacity-0",
+            className
+          )}
+          onLoad={() => setImageLoaded(true)}
+          onError={() => setImageError(true)}
+          loading={priority ? "eager" : "lazy"}
+          quality={85} // Reduced quality for smaller file sizes
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
+          style={{ 
+            position: imageLoaded ? 'static' : 'absolute',
+            top: imageLoaded ? 'auto' : 0,
+            left: imageLoaded ? 'auto' : 0
+          }}
+        />
+      )}
+    </div>
+  );
+};
 
 export default function MuseItemCard({
   item,
@@ -72,7 +172,6 @@ export default function MuseItemCard({
           return;
         }
       } catch (error) {
-        // If DOM operations fail (e.g., during component updates), safely continue
         console.warn('DOM operation failed in handleMouseLeave:', error);
       }
     }
@@ -97,9 +196,7 @@ export default function MuseItemCard({
   const handleDropdownOpenChange = (open: boolean) => {
     setIsDropdownOpen(open);
     
-    // When dropdown closes, check if mouse is still over the card
     if (!open) {
-      // Small delay to allow for mouse position check
       setTimeout(() => {
         if (!isMouseOverCard()) {
           setIsHovered(false);
@@ -133,6 +230,32 @@ export default function MuseItemCard({
 
   // Keep hover state active if dropdown is open
   const shouldShowHoverEffects = (isHovered || isDropdownOpen) && !isSelectionMode;
+
+  // Calculate optimal display dimensions (much smaller than original)
+  const getDisplayDimensions = () => {
+    if (!isImageType || !item.image_width || !item.image_height) {
+      return { width: 300, height: 200 };
+    }
+
+    const maxWidth = 500; // Reduced from original size
+    const maxHeight = 700; // Reduced from original size
+    const aspectRatio = item.image_width / item.image_height;
+
+    let displayWidth = Math.min(item.image_width, maxWidth);
+    let displayHeight = displayWidth / aspectRatio;
+
+    if (displayHeight > maxHeight) {
+      displayHeight = maxHeight;
+      displayWidth = displayHeight * aspectRatio;
+    }
+
+    return {
+      width: Math.round(displayWidth),
+      height: Math.round(displayHeight)
+    };
+  };
+
+  const { width: displayWidth, height: displayHeight } = getDisplayDimensions();
 
   return (
     <motion.div
@@ -240,7 +363,6 @@ export default function MuseItemCard({
                 className="w-40"
                 onCloseAutoFocus={(e) => e.preventDefault()}
                 onEscapeKeyDown={() => {
-                  // When escape is pressed, ensure we maintain hover state if mouse is still over card
                   setTimeout(() => {
                     if (!isMouseOverCard()) {
                       setIsHovered(false);
@@ -276,13 +398,13 @@ export default function MuseItemCard({
         {isImageType && item.signedUrl && (
           <div className="relative w-full">
             {isSelectionMode && <div className={cn("absolute inset-0 bg-black/30 z-10 transition-opacity", !isSelected && "bg-black/60")} />}
-            <Image
+            <ProgressiveImage
               src={item.signedUrl}
               alt={item.description || "Muse Image"}
-              width={item.image_width || 500}
-              height={item.image_height || 500}
+              width={displayWidth}
+              height={displayHeight}
               className="object-contain w-full h-auto bg-zinc-800"
-              unoptimized
+              priority={index < 6} // Only prioritize first 6 images
             />
           </div>
         )}

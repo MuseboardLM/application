@@ -32,12 +32,15 @@ export default async function MuseboardPage() {
     redirect("/sign-in");
   }
 
+  // Fetch muse items with pagination for better performance
+  const itemsPerPage = 50; // Limit initial load
   const { data: museItems, error: itemsError } = await supabase
     .from("muse_items")
     .select("*")
     .eq("user_id", user.id)
     .is("deleted_at", null)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(itemsPerPage); // Add pagination
 
   if (itemsError) {
     console.error("Error fetching muse items:", itemsError.message);
@@ -61,10 +64,11 @@ export default async function MuseboardPage() {
   let signedUrlMap: Map<string, string> = new Map();
 
   if (imagePaths.length > 0) {
+    // Create signed URLs with longer expiry to reduce egress from frequent regeneration
     const { data: signedUrlsData, error: signedUrlsError } =
       await supabase.storage
         .from("muse-files")
-        .createSignedUrls(imagePaths, 60 * 5);
+        .createSignedUrls(imagePaths, 60 * 60 * 24); // 24 hours instead of 5 minutes
 
     if (signedUrlsError) {
       console.error("Error creating signed URLs:", signedUrlsError.message);
