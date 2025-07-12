@@ -20,13 +20,10 @@ export default async function MuseboardLayout({
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col">
+    <div className="relative flex min-h-screen flex-col bg-black">
       <Header />
-      {/* --- THIS IS THE FIX --- */}
-      {/* We wrap the children in a container div that provides the constrained, 
-          centered width that the MuseboardClientWrapper's JavaScript expects. */}
-      <main className="flex-1">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="flex-1 bg-black">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 bg-black">
           {children}
         </div>
       </main>

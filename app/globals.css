@@ -197,6 +197,51 @@
      html {
        scroll-behavior: smooth;
      }
+
+     /* ================================================================
+        MUSEBOARD BACKGROUND FIX - Force solid black background
+        ================================================================ */
+     
+     /* Force Museboard pages to have solid black background */
+     [data-page="museboard"],
+     .museboard-page,
+     body:has([data-page="museboard"]) {
+       background: #000 !important;
+       background-color: #000 !important;
+       background-image: none !important;
+     }
+
+     /* Force any container within museboard to be black */
+     [data-page="museboard"] *,
+     .museboard-page * {
+       --background: #000;
+     }
+
+     /* Override any potential landing page backgrounds */
+     body:has([data-museboard-active]) {
+       background: #000 !important;
+       background-image: none !important;
+     }
+
+     /* Ensure chat overlay doesn't leave residue */
+     body:has([data-chat-active]) {
+       background: #000 !important;
+       background-image: none !important;
+     }
+
+     /* Force root to be black when on museboard */
+     html:has([data-page="museboard"]) {
+       background: #000 !important;
+       background-color: #000 !important;
+     }
+
+     /* Override any potential CSS custom properties */
+     [data-page="museboard"] {
+       --tw-bg-opacity: 1;
+       --tw-gradient-from: #000;
+       --tw-gradient-to: #000;
+       --tw-gradient-stops: #000;
+     }
    
      .glow-primary {
        box-shadow: 0 0 20px oklch(1 0 0 / 0.1), 0 0 40px oklch(1 0 0 / 0.05);
@@ -379,6 +424,13 @@
        cursor: not-allowed;
        transform: scale(1);
        box-shadow: 0 2px 8px rgba(255, 255, 255, 0.05);
+     }
+
+     /* Force museboard background utilities */
+     .force-black-bg {
+       background: #000 !important;
+       background-color: #000 !important;
+       background-image: none !important;
      }
    }
    

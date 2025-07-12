@@ -184,7 +184,7 @@ export function OnboardingClient({ user, existingMission }: OnboardingClientProp
                 />
                 <span>Welcome to MBLM</span>
               </motion.h1>
-              <p className="text-muted-foreground">Your private & personal digital muse</p>
+              <p className="text-muted-foreground">Your private & personal AI muse</p>
             </div>
 
             <div className="space-y-6">
