@@ -1,3 +1,5 @@
+// components/ai/MagicBar.tsx
+
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
@@ -10,7 +12,8 @@ import {
     Link as LinkIcon,
     Paperclip,
     Image as ImageIcon,
-    X
+    X,
+    Search // <-- Added Search Icon
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -21,6 +24,7 @@ interface MagicBarProps {
     onTransformToChat: (initialMessage: string, attachments?: File[]) => void;
     onAddContent: (content: string, type: "text" | "link") => void;
     onFileUpload: (files: File[]) => void;
+    onSearch: (query: string) => void; // <-- Added onSearch prop
     className?: string;
     disabled?: boolean;
 }
@@ -32,6 +36,7 @@ export default function MagicBar({
     onTransformToChat,
     onAddContent,
     onFileUpload,
+    onSearch, // <-- Destructure onSearch prop
     className,
     disabled = false
 }: MagicBarProps) {
@@ -115,20 +120,35 @@ export default function MagicBar({
     }, []); // Empty dependency array ensures this runs only on the client after the component mounts.
 
     const detectIntent = useCallback((input: string): MagicBarAction => {
-        const trimmedInput = input.trim().toLowerCase();
-        if (attachedFiles.length > 0) {
-            return { type: "chat", intent: "chat_with_files", confidence: 0.95, data: { chatMessage: input.trim() } };
-        }
-        const chatPatterns = [/^(what|how|why|when|where|who|can|should|would|could|is|are|do|does|did)/, /\?$/, /^(help|explain|tell me|show me|find|search)/, /^(analyze|summarize|insights?|thoughts?|advice)/, /shadow/i];
-        const urlPattern = /^https?:\/\/|www\./;
+        const trimmedInput = input.trim();
+        const lowercasedInput = trimmedInput.toLowerCase();
 
-        if (urlPattern.test(trimmedInput)) {
-            return { type: "add_content", intent: "add_link", confidence: 0.95, data: { contentType: "link", content: input.trim() } };
+        // Priority 1: Files are attached -> Always a chat action
+        if (attachedFiles.length > 0) {
+            return { type: "chat", intent: "chat_with_files", confidence: 0.95, data: { chatMessage: trimmedInput } };
         }
-        if (chatPatterns.some(pattern => pattern.test(trimmedInput))) {
-            return { type: "chat", intent: "question_or_chat", confidence: 0.85, data: { chatMessage: input.trim() } };
+
+        // Priority 2: Explicit search command
+        const searchPatterns = /^(search for|find|look for|show me items about)/;
+        if (searchPatterns.test(lowercasedInput)) {
+            const searchQuery = trimmedInput.replace(searchPatterns, '').trim();
+            return { type: "search", intent: "explicit_search", confidence: 0.9, data: { searchQuery } };
         }
-        return { type: "add_content", intent: "add_text", confidence: 0.7, data: { contentType: "text", content: input.trim() } };
+
+        // Priority 3: It's a URL -> Add link
+        const urlPattern = /^(https?:\/\/|www\.)/;
+        if (urlPattern.test(lowercasedInput)) {
+            return { type: "add_content", intent: "add_link", confidence: 0.95, data: { contentType: "link", content: trimmedInput } };
+        }
+
+        // Priority 4: It looks like a question or chat command
+        const chatPatterns = [/^(what|how|why|when|where|who|can|should|is|are|do|did)/, /\?$/, /^(help|explain|tell me|summarize|analyze|shadow)/i];
+        if (chatPatterns.some(pattern => pattern.test(lowercasedInput))) {
+            return { type: "chat", intent: "question_or_chat", confidence: 0.85, data: { chatMessage: trimmedInput } };
+        }
+
+        // Default: Add as text
+        return { type: "add_content", intent: "add_text", confidence: 0.7, data: { contentType: "text", content: trimmedInput } };
     }, [attachedFiles.length]);
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -165,6 +185,7 @@ export default function MagicBar({
         setIsProcessing(true);
         try {
             const action = detectIntent(value);
+            
             if (!value.trim() && attachedFiles.length > 0) {
                 toast.success("Uploading files...", { icon: "📎", duration: 2000 });
                 onFileUpload(attachedFiles);
@@ -172,10 +193,14 @@ export default function MagicBar({
                 setValue("");
                 return;
             }
+
             if (action.type === "chat") {
                 toast.success(attachedFiles.length > 0 ? "Starting chat with attachments..." : "Starting chat with Shadow...", { icon: attachedFiles.length > 0 ? "📎💭" : "💭", duration: 2000 });
                 onTransformToChat(value.trim(), attachedFiles);
                 setAttachedFiles([]);
+            } else if (action.type === "search") {
+                toast.success(`Searching for: "${action.data.searchQuery}"...`, { icon: "🔍", duration: 2000 });
+                onSearch(action.data.searchQuery!);
             } else if (action.type === "add_content") {
                 const contentType = action.data.contentType as "text" | "link";
                 if (contentType === "link") {
@@ -185,6 +210,7 @@ export default function MagicBar({
                 }
                 onAddContent(value.trim(), contentType);
             }
+            
             setValue("");
         } catch (error) {
             console.error("Error processing Magic Bar input:", error);
@@ -209,6 +235,13 @@ export default function MagicBar({
                     <MessageSquare className="w-3 h-3" />
                     <span>{attachedFiles.length > 0 ? `Chat with Shadow (${attachedFiles.length} file${attachedFiles.length > 1 ? 's' : ''})` : "Chat with Shadow"}</span>
                     <div className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-pulse" />
+                </motion.div>
+            );
+        } else if (action.type === "search") {
+             return (
+                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className={`${baseClasses} bg-amber-500/20 text-amber-300 border-amber-500/40`}>
+                    <Search className="w-3 h-3" />
+                    <span>Search Museboard</span>
                 </motion.div>
             );
         } else if (action.data.contentType === "link") {

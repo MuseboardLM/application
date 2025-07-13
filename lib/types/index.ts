@@ -1,5 +1,4 @@
 // lib/types/index.ts
-// AI-enhanced types that complement your Supabase generated types
 
 import { User } from "@supabase/supabase-js";
 import { Database } from "@/types/supabase";

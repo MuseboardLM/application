@@ -6,7 +6,15 @@ import { createServer } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
-import type { MuseItem, UserMission, ShadowContext } from "@/lib/types";
+import type { MuseItem, UserMission, ShadowContext, MuseItemSort } from "@/lib/types";
+
+/* RECOMMENDATION: For the updated `searchMuseItems` function to perform best, 
+  you should create a Full-Text Search index in your Supabase database. 
+  
+  You can do this by running the following command in the Supabase SQL Editor:
+
+  CREATE INDEX muse_items_fts_idx ON public.muse_items USING gin (to_tsvector('english', content || ' ' || description || ' ' || ai_summary));
+*/
 
 const MissionSchema = z.object({
   mission_statement: z.string().min(10, "Please share at least 10 characters about your mission"),
@@ -739,14 +747,17 @@ export async function getConversationMessages(conversationId: string, limit = 50
 }
 
 /**
- * Search muse items with AI-enhanced filtering
+ * Search muse items with AI-enhanced filtering and dynamic sorting
  */
 export async function searchMuseItems(
   query: string,
-  filters?: {
-    categories?: string[];
-    content_types?: string[];
-    relevance_threshold?: number;
+  options?: {
+    filters?: {
+      categories?: string[];
+      content_types?: string[];
+      relevance_threshold?: number;
+    };
+    sort?: MuseItemSort;
   }
 ) {
   const supabase = createServer();
@@ -764,11 +775,14 @@ export async function searchMuseItems(
       .eq("user_id", user.id)
       .is("deleted_at", null);
 
-    // Add text search
+    // Add text search using Full-Text Search for better performance and relevance
     if (query.trim()) {
-      queryBuilder = queryBuilder.or(`content.ilike.%${query}%,description.ilike.%${query}%,ai_summary.ilike.%${query}%`);
+      // 'websearch' is good for natural language queries. It handles 'and'/'or' logic.
+      const ftsQuery = query.trim().split(' ').filter(Boolean).join(' & ');
+      queryBuilder = queryBuilder.textSearch('fts', ftsQuery, { type: 'websearch' });
     }
 
+    const filters = options?.filters;
     // Add category filter
     if (filters?.categories && filters.categories.length > 0) {
       queryBuilder = queryBuilder.overlaps("ai_categories", filters.categories);
@@ -784,20 +798,33 @@ export async function searchMuseItems(
       queryBuilder = queryBuilder.gte("ai_relevance_score", filters.relevance_threshold);
     }
 
-    // Order by relevance score if available, then by creation date
-    queryBuilder = queryBuilder.order("ai_relevance_score", { ascending: false, nullsFirst: false })
-                              .order("created_at", { ascending: false });
+    // Add dynamic sorting
+    const sort = options?.sort;
+    if (sort && sort.field && sort.direction) {
+        // For relevance, we add a secondary sort by creation date for tie-breaking
+        if(sort.field === 'ai_relevance_score') {
+            // Nulls are considered lowest, so for 'desc', they should come last.
+            queryBuilder = queryBuilder.order(sort.field, { ascending: sort.direction === 'asc', nullsFirst: true });
+            queryBuilder = queryBuilder.order('created_at', { ascending: false });
+        } else {
+            queryBuilder = queryBuilder.order(sort.field, { ascending: sort.direction === 'asc' });
+        }
+    } else {
+      // Default sort
+      queryBuilder = queryBuilder.order("created_at", { ascending: false });
+    }
 
     const { data: items, error } = await queryBuilder.limit(100);
 
     if (error) {
-      return { success: false, error: error.message, data: [] };
+      console.error("Search/Sort Error:", error.message);
+      return { success: false, error: "Failed to retrieve items. " + error.message, data: [] };
     }
 
     return { success: true, data: items as MuseItem[] };
 
   } catch (error) {
-    console.error("Search error:", error);
-    return { success: false, error: "Search failed", data: [] };
+    console.error("Search action error:", error);
+    return { success: false, error: "An unexpected error occurred during search.", data: [] };
   }
 }
