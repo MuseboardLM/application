@@ -1,0 +1,7 @@
+# In museboard-ai-service/requirements.txt
+dspy-ai[openai]
+fastapi
+uvicorn[standard]
+supabase
+python-dotenv
+pydantic
