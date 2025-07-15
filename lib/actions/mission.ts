@@ -8,14 +8,6 @@ import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
 import type { MuseItem, UserMission, ShadowContext, MuseItemSort } from "@/lib/types";
 
-/* RECOMMENDATION: For the updated `searchMuseItems` function to perform best, 
-  you should create a Full-Text Search index in your Supabase database. 
-  
-  You can do this by running the following command in the Supabase SQL Editor:
-
-  CREATE INDEX muse_items_fts_idx ON public.muse_items USING gin (to_tsvector('english', content || ' ' || description || ' ' || ai_summary));
-*/
-
 const MissionSchema = z.object({
   mission_statement: z.string().min(10, "Please share at least 10 characters about your mission"),
 });
@@ -50,7 +42,6 @@ export async function saveMissionAction(
   try {
     const supabase = createServer();
     
-    // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     
     if (userError || !user) {
@@ -60,7 +51,6 @@ export async function saveMissionAction(
       };
     }
 
-    // Check if user already has a mission
     const { data: existingMission } = await supabase
       .from("user_missions")
       .select("id")
@@ -68,7 +58,6 @@ export async function saveMissionAction(
       .single();
 
     if (existingMission) {
-      // Update existing mission
       const { error } = await supabase
         .from("user_missions")
         .update({
@@ -83,7 +72,6 @@ export async function saveMissionAction(
         };
       }
     } else {
-      // Create new mission
       const { error } = await supabase
         .from("user_missions")
         .insert({
@@ -118,7 +106,6 @@ export async function uploadOnboardingFileAction(formData: FormData): Promise<Mi
   try {
     const supabase = createServer();
     
-    // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     
     if (userError || !user) {
@@ -136,12 +123,10 @@ export async function uploadOnboardingFileAction(formData: FormData): Promise<Mi
       };
     }
 
-    // Generate unique filename with user folder structure
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
     const filePath = `${user.id}/${fileName}`;
 
-    // Upload to Supabase storage with user folder structure
     const { error: uploadError } = await supabase.storage
       .from("muse-files")
       .upload(filePath, file);
@@ -154,7 +139,6 @@ export async function uploadOnboardingFileAction(formData: FormData): Promise<Mi
       };
     }
 
-    // Add to muse_items table with AI processing status
     const { error: dbError } = await supabase
       .from("muse_items")
       .insert({
@@ -162,13 +146,12 @@ export async function uploadOnboardingFileAction(formData: FormData): Promise<Mi
         content: filePath,
         content_type: "image",
         description: "First inspiration added during onboarding",
-        ai_status: "pending", // Mark for AI processing
+        ai_status: "pending",
       });
 
     if (dbError) {
       console.error("Database insert error:", dbError);
       
-      // Clean up the uploaded file if database insert fails
       await supabase.storage
         .from("muse-files")
         .remove([filePath]);
@@ -241,7 +224,6 @@ export async function uploadFileToMuseboardAction(formData: FormData) {
   const supabase = createServer();
 
   try {
-    // Check authentication
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     
     if (userError || !user) {
@@ -258,7 +240,6 @@ export async function uploadFileToMuseboardAction(formData: FormData) {
       return { success: false, error: "No file provided" };
     }
 
-    // Validate file type
     const allowedTypes = [
       "image/jpeg", "image/jpg", "image/png", "image/gif", 
       "image/webp", "image/svg+xml",
@@ -269,41 +250,35 @@ export async function uploadFileToMuseboardAction(formData: FormData) {
       return { success: false, error: "File type not supported" };
     }
 
-    // Validate file size (max 10MB for original file)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
       return { success: false, error: "File size must be less than 10MB" };
     }
 
-    // Generate unique filename
     const fileExt = file.name.split(".").pop();
     const timestamp = Date.now();
     const uniqueId = uuidv4().split('-')[0];
     const fileName = `${timestamp}-${uniqueId}.${fileExt}`;
     
-    // Create user-specific file path
     const filePath = `${user.id}/${fileName}`;
 
     try {
-      // Upload original file to Supabase Storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from("muse-files")
         .upload(filePath, file, {
           upsert: false,
-          cacheControl: "31536000", // 1 year cache
+          cacheControl: "31536000",
         });
 
       if (uploadError) {
         throw new Error(`Upload failed: ${uploadError.message}`);
       }
 
-      // Parse image dimensions
       const dimensions = {
         width: imageWidth ? parseInt(imageWidth) : null,
         height: imageHeight ? parseInt(imageHeight) : null,
       };
 
-      // Insert record into database with AI processing status
       const { data: insertData, error: insertError } = await supabase
         .from("muse_items")
         .insert({
@@ -313,13 +288,12 @@ export async function uploadFileToMuseboardAction(formData: FormData) {
           description: description || null,
           image_width: dimensions.width,
           image_height: dimensions.height,
-          ai_status: "pending", // Mark for AI processing
+          ai_status: "pending",
         })
         .select()
         .single();
 
       if (insertError) {
-        // If database insert fails, clean up the uploaded file
         await supabase.storage.from("muse-files").remove([filePath]);
         throw new Error(`Database insert failed: ${insertError.message}`);
       }
@@ -363,14 +337,12 @@ export async function addContentToMuseboardAction(
   const supabase = createServer();
 
   try {
-    // Check authentication
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     
     if (userError || !user) {
       return { success: false, error: "You must be logged in to add content" };
     }
 
-    // Validate content
     if (!content || content.trim().length === 0) {
       return { success: false, error: "Content cannot be empty" };
     }
@@ -379,7 +351,6 @@ export async function addContentToMuseboardAction(
       return { success: false, error: "Content is too long (max 10,000 characters)" };
     }
 
-    // For links, validate URL format
     if (contentType === "link") {
       try {
         new URL(content);
@@ -388,7 +359,6 @@ export async function addContentToMuseboardAction(
       }
     }
 
-    // Insert record into database with AI processing status
     const { data: insertData, error: insertError } = await supabase
       .from("muse_items")
       .insert({
@@ -399,7 +369,7 @@ export async function addContentToMuseboardAction(
         source_url: options.sourceUrl?.trim() || null,
         image_width: null,
         image_height: null,
-        ai_status: "pending", // Mark for AI processing
+        ai_status: "pending",
       })
       .select()
       .single();
@@ -451,7 +421,6 @@ export async function getUserMission(): Promise<UserMission | null> {
 
 /**
  * Get Shadow context for AI processing
- * This provides all the context Shadow needs to understand the user
  */
 export async function getShadowContext(): Promise<ShadowContext | null> {
   const supabase = createServer();
@@ -463,7 +432,6 @@ export async function getShadowContext(): Promise<ShadowContext | null> {
   }
 
   try {
-    // Get user mission
     const { data: mission } = await supabase
       .from("user_missions")
       .select("mission_statement")
@@ -474,7 +442,6 @@ export async function getShadowContext(): Promise<ShadowContext | null> {
       return null;
     }
 
-    // Get recent muse items (last 50 for context)
     const { data: recentItems } = await supabase
       .from("muse_items")
       .select("*")
@@ -483,14 +450,12 @@ export async function getShadowContext(): Promise<ShadowContext | null> {
       .order("created_at", { ascending: false })
       .limit(50);
 
-    // Get total item count
     const { count: totalItems } = await supabase
       .from("muse_items")
       .select("*", { count: "exact", head: true })
       .eq("user_id", user.id)
       .is("deleted_at", null);
 
-    // Extract categories from items
     const allCategories = (recentItems || [])
       .flatMap(item => item.ai_categories || [])
       .filter(Boolean);
@@ -505,7 +470,6 @@ export async function getShadowContext(): Promise<ShadowContext | null> {
       .slice(0, 10)
       .map(([cat]) => cat);
 
-    // Analyze user preferences
     const contentTypeCounts = (recentItems || []).reduce((acc, item) => {
       acc[item.content_type] = (acc[item.content_type] || 0) + 1;
       return acc;
@@ -515,7 +479,6 @@ export async function getShadowContext(): Promise<ShadowContext | null> {
       .sort(([,a], [,b]) => b - a)
       .map(([type]) => type);
 
-    // Get recent conversation history (last 20 messages)
     const { data: activeConversation } = await supabase
       .from("ai_conversations")
       .select("id")
@@ -532,7 +495,7 @@ export async function getShadowContext(): Promise<ShadowContext | null> {
         .order("created_at", { ascending: false })
         .limit(20);
       
-      conversationHistory = (messages || []).reverse(); // Show oldest first
+      conversationHistory = (messages || []).reverse();
     }
 
     return {
@@ -543,7 +506,7 @@ export async function getShadowContext(): Promise<ShadowContext | null> {
       userPreferences: {
         contentTypes: preferredContentTypes,
         categories: topCategories,
-        sources: [], // Could extract from source_url if needed
+        sources: [],
       },
       conversationHistory,
     };
@@ -616,7 +579,7 @@ export async function updateAIStatus(
     .from("muse_items")
     .update(updateData)
     .eq("id", itemId)
-    .eq("user_id", user.id); // Ensure user can only update their own items
+    .eq("user_id", user.id);
 
   if (error) {
     return { success: false, error: error.message };
@@ -643,7 +606,6 @@ export async function saveAIMessage(
     return { success: false, error: "Authentication required" };
   }
 
-  // Verify user owns the conversation
   const { data: conversation } = await supabase
     .from("ai_conversations")
     .select("user_id")
@@ -682,7 +644,6 @@ export async function getOrCreateActiveConversation() {
     return null;
   }
 
-  // Try to get existing active conversation
   const { data: conversation } = await supabase
     .from("ai_conversations")
     .select("*")
@@ -694,7 +655,6 @@ export async function getOrCreateActiveConversation() {
     return conversation;
   }
 
-  // Create new conversation if none exists
   const { data: newConversation, error } = await supabase
     .from("ai_conversations")
     .insert({
@@ -725,7 +685,6 @@ export async function getConversationMessages(conversationId: string, limit = 50
     return [];
   }
 
-  // Verify user owns the conversation
   const { data: conversation } = await supabase
     .from("ai_conversations")
     .select("user_id")
@@ -777,9 +736,8 @@ export async function searchMuseItems(
 
     // Add text search using Full-Text Search for better performance and relevance
     if (query.trim()) {
-      // 'websearch' is good for natural language queries. It handles 'and'/'or' logic.
-      const ftsQuery = query.trim().split(' ').filter(Boolean).join(' & ');
-      queryBuilder = queryBuilder.textSearch('fts', ftsQuery, { type: 'websearch' });
+      const keywords = query.trim().split(' ').filter(Boolean).join(' & ');
+      queryBuilder = queryBuilder.textSearch('fts', keywords, { type: 'websearch' });
     }
 
     const filters = options?.filters;

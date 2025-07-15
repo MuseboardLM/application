@@ -7,294 +7,294 @@ import { User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChatInput } from "@/components/ui/chat-input";
-import { saveMissionAction, completeOnboardingAction, uploadOnboardingFileAction } from "@/lib/actions/mission";
-import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
-import { UploadCloudIcon, Crop, Check } from "lucide-react";
+import { Crop, Check, ArrowRight } from "lucide-react";
 import IridescentIcon from "@/components/ui/iridescent-icon";
+import { Button } from "@/components/ui/button";
+import {
+  saveMissionAction,
+  populateInitialMuseboardAction,
+  completeOnboardingAction
+} from "@/lib/actions/onboarding";
 
 interface OnboardingClientProps {
   user: User;
-  existingMission: any;
+  existingMission?: any;
 }
 
-type OnboardingStep = "mission" | "content";
-
-// Progress indicator component (now only 2 steps)
-const ProgressIndicator = ({ currentStep }: { currentStep: OnboardingStep }) => {
-  const steps = ["mission", "content"];
-  const currentIndex = steps.indexOf(currentStep);
-  
-  return (
-    <div className="flex justify-center mb-8">
-      <div className="flex items-center gap-2">
-        {steps.map((_, index) => (
-          <motion.div
-            key={index}
-            className={`w-2 h-2 rounded-full transition-colors duration-300 ${
-              index <= currentIndex ? "bg-primary" : "bg-primary/20"
-            }`}
-            initial={{ scale: 0.8 }}
-            animate={{ scale: index === currentIndex ? 1.2 : 1 }}
-            transition={{ duration: 0.3 }}
-          />
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// Character counter component
-const CharacterCounter = ({ text, minLength = 10 }: { text: string; minLength?: number }) => {
-  const isValid = text.length >= minLength;
-  
-  return (
-    <div className="flex items-center justify-between mt-2 text-xs">
-      <span className="text-muted-foreground">Press Enter to continue</span>
-      <span className={`transition-colors ${isValid ? "text-green-500" : "text-muted-foreground"}`}>
-        {isValid ? (
-          <span className="flex items-center gap-1">
-            <Check className="w-3 h-3" />
-            Ready
-          </span>
-        ) : (
-          `${Math.max(0, minLength - text.length)} more characters`
-        )}
-      </span>
-    </div>
-  );
-};
-
 export function OnboardingClient({ user, existingMission }: OnboardingClientProps) {
-  const [currentStep, setCurrentStep] = useState<OnboardingStep>(
-    existingMission?.mission_statement ? "content" : "mission"
-  );
-  const [mission, setMission] = useState(existingMission?.mission_statement || "");
-  const [isPending, startTransition] = useTransition();
-  const [isUploading, setIsUploading] = useState(false);
-  const [isCompletingOnboarding, setIsCompletingOnboarding] = useState(false);
-  
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  
+  // Core state
+  const [mission, setMission] = useState(existingMission?.mission_statement || "");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showMission, setShowMission] = useState(!!existingMission?.mission_statement);
+  const [isGeneratingContent, setIsGeneratingContent] = useState(false);
 
-  // Handle mission submission
-  const handleMissionSubmit = (missionText: string) => {
-    if (missionText.length < 10) {
-      toast.error("Please share at least 10 characters about your mission");
-      return;
+  // Handle mission submission with AI enhancement
+  const handleMissionSubmit = async (userInput: string) => {
+    if (!userInput.trim()) return;
+    
+    setIsProcessing(true);
+    
+    try {
+      // Call our AI service to enhance/refine the mission
+      const response = await fetch('/api/ai/mission/enhance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userInput: userInput.trim(),
+          userId: user.id
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to process mission');
+      }
+
+      const data = await response.json();
+      
+      if (data.mission) {
+        setMission(data.mission);
+        setShowMission(true);
+        
+        // Save to database
+        startTransition(async () => {
+          const saveResult = await saveMissionAction(data.mission);
+          if (!saveResult.success) {
+            toast.error("Failed to save mission");
+          }
+        });
+        
+        toast.success("Mission crafted! ✨", {
+          description: "Shadow has refined your vision"
+        });
+      } else {
+        toast.error("Failed to craft mission");
+      }
+    } catch (error) {
+      console.error('Mission processing error:', error);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsProcessing(false);
     }
+  };
+
+  // Handle the final step - generate museboard
+  const handleGenerateMuseboard = async () => {
+    if (!mission) return;
+    
+    setIsGeneratingContent(true);
     
     startTransition(async () => {
-      const formData = new FormData();
-      formData.append("mission_statement", missionText);
-      
-      const result = await saveMissionAction(null, formData);
-      
-      if (result.success) {
-        setMission(missionText);
-        setCurrentStep("content");
-        toast.success("Mission saved! Let's add your first inspiration.");
-      } else {
-        toast.error(result.error || "Failed to save mission");
+      try {
+        // Generate AI-curated content
+        const populateResult = await populateInitialMuseboardAction();
+        
+        if (populateResult.success && populateResult.data) {
+          // Complete onboarding
+          const completeResult = await completeOnboardingAction();
+          
+          if (completeResult.success) {
+            toast.success("🎉 Welcome to your Museboard!", {
+              description: `${populateResult.data.items_added} pieces of inspiration curated just for you`,
+              duration: 4000,
+            });
+            
+            setTimeout(() => {
+              router.push('/museboard');
+            }, 2000);
+          } else {
+            toast.error("Failed to complete setup");
+          }
+        } else {
+          toast.error("Failed to generate content");
+        }
+      } catch (error) {
+        console.error('Content generation error:', error);
+        toast.error("Failed to generate your Museboard");
+      } finally {
+        setIsGeneratingContent(false);
       }
     });
   };
 
-  // Handle content upload and complete onboarding in one flow
-  const onDrop = async (acceptedFiles: File[]) => {
-    if (acceptedFiles.length === 0) return;
-
-    const file = acceptedFiles[0];
-    setIsUploading(true);
-
-    try {
-      // Step 1: Upload the file
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const uploadResult = await uploadOnboardingFileAction(formData);
-
-      if (!uploadResult.success) {
-        toast.error(uploadResult.error || "Failed to upload content");
-        return;
-      }
-
-      // Step 2: Complete onboarding immediately after successful upload
-      setIsCompletingOnboarding(true);
-      
-      const completeResult = await completeOnboardingAction();
-      
-      if (completeResult.success) {
-        // Show success message and redirect
-        toast.success("Perfect! Welcome to your Museboard 🎉", {
-          description: "Your first inspiration has been added to your personal muse.",
-          duration: 3000,
-        });
-        
-        // Small delay to let user see the success message
-        setTimeout(() => {
-          router.push("/museboard");
-        }, 1500);
-      } else {
-        toast.error(completeResult.error || "Failed to complete onboarding");
-        setIsCompletingOnboarding(false);
-      }
-
-    } catch (error: any) {
-      console.error("Upload error:", error);
-      toast.error("Failed to upload content: " + error.message);
-      setIsCompletingOnboarding(false);
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: { "image/*": [".jpeg", ".jpg", ".png", ".gif", ".webp"] },
-    maxFiles: 1,
-    disabled: isUploading || isCompletingOnboarding,
-  });
-
-  const isProcessing = isUploading || isCompletingOnboarding;
-
   return (
-    <div className="max-w-2xl mx-auto p-8">
-      <ProgressIndicator currentStep={currentStep} />
-      
-      <AnimatePresence mode="wait">
-        {/* Step 1: Mission */}
-        {currentStep === "mission" && (
+    <div className="min-h-screen flex items-center justify-center p-8">
+      <div className="max-w-2xl w-full space-y-8">
+        
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center space-y-4"
+        >
           <motion.div
-            key="mission"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="space-y-32"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            className="inline-flex items-center justify-center"
           >
-            <div className="text-center">
-              <motion.h1
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="text-3xl font-bold mb-2 flex items-center justify-center gap-2 group"
-              >
-                <IridescentIcon 
-                  icon={Crop} 
-                  className="icon-iridescent h-8 w-8 transition-transform duration-200 group-hover:rotate-12" 
-                />
-                <span>Welcome to MBLM</span>
-              </motion.h1>
-              <p className="text-muted-foreground">Your private & personal AI muse</p>
-            </div>
-
-            <div className="space-y-6">
-              <div className="text-left">
-                <h2 className="text-2xl font-semibold mb-2">What's your mission?</h2>
-                <p className="text-muted-foreground leading-relaxed">
-                  What are your deepest, most intimate dreams and goals?
-                </p>
-                <p className="text-muted-foreground leading-relaxed">What absolutely must be accomplished in your lifetime?</p>
-              </div>
-              
-              <div className="space-y-2">
-                <ChatInput
-                  placeholder="e.g., Build something meaningful that changes lives and gives me the freedom to live on my own terms..."
-                  onSubmit={handleMissionSubmit}
-                  disabled={isPending}
-                  rows={4}
-                />
-              </div>
-            </div>
+            <IridescentIcon 
+              icon={Crop} 
+              className="icon-iridescent h-12 w-12" 
+            />
           </motion.div>
-        )}
+          
+          <h1 className="text-4xl font-bold">Welcome to MBLM</h1>
+          <p className="text-lg text-muted-foreground max-w-md mx-auto">
+            Your private AI muse. Let's start with what drives you.
+          </p>
+        </motion.div>
 
-        {/* Step 2: First Content - Now the final step */}
-        {currentStep === "content" && (
-          <motion.div
-            key="content"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="space-y-8"
-          >
-            <div className="text-center">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: "spring" }}
-                className="w-16 h-16 flex items-center justify-center mx-auto mb-8 group"
-              >
-                <IridescentIcon 
-                  icon={Crop} 
-                  className="icon-iridescent h-8 w-8 transition-transform duration-200 group-hover:rotate-12" 
-                />
-              </motion.div>
-              
-              <h2 className="text-2xl font-bold mb-3">Add Your First Inspiration</h2>
-              <p className="text-muted-foreground max-w-md mx-auto mb-8">
-                Upload something that fuels your mission - a screenshot, quote, image, anything that lights you up.
-              </p>
-            </div>
-
-            <div 
-              {...getRootProps()} 
-              className={`
-                border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all duration-300
-                ${isDragActive 
-                  ? "border-primary bg-primary/10 scale-105" 
-                  : "border-border hover:border-primary/50 hover:bg-primary/5"
-                }
-                ${isProcessing ? "opacity-50 cursor-not-allowed" : ""}
-              `}
+        <AnimatePresence mode="wait">
+          {!showMission ? (
+            /* Step 1: Mission Input */
+            <motion.div
+              key="mission-input"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-6"
             >
-              <input {...getInputProps()} />
-              <motion.div
-                animate={{ y: isDragActive ? -5 : 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <UploadCloudIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              </motion.div>
+              <div className="text-center space-y-2">
+                <h2 className="text-xl font-semibold">What's your mission?</h2>
+                <p className="text-muted-foreground">
+                  Share your goals, dreams, or what you want to accomplish. Shadow will help refine it.
+                </p>
+              </div>
               
-              {isProcessing ? (
-                <div className="space-y-2">
-                  {isUploading && (
-                    <>
-                      <p className="font-medium mb-2 text-lg">Uploading your inspiration...</p>
-                      <p className="text-sm text-muted-foreground">Please wait while we save your content</p>
-                    </>
-                  )}
-                  {isCompletingOnboarding && (
+              <div className="relative">
+                <ChatInput
+                  placeholder="e.g., Help solo founders build profitable products, Become a better leader, Create meaningful art that inspires others..."
+                  onSubmit={handleMissionSubmit}
+                  disabled={isProcessing}
+                  rows={3}
+                  className="text-center"
+                />
+                
+                {isProcessing && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="absolute inset-0 bg-background/80 flex items-center justify-center rounded-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                      >
+                        <Crop className="w-5 h-5 text-primary" />
+                      </motion.div>
+                      <span className="text-sm text-muted-foreground">
+                        Shadow is crafting your mission...
+                      </span>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+            </motion.div>
+          ) : (
+            /* Step 2: Mission Display & Generate */
+            <motion.div
+              key="mission-display"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-8"
+            >
+              {/* Mission Display */}
+              <motion.div
+                initial={{ scale: 0.95 }}
+                animate={{ scale: 1 }}
+                className="relative"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl blur-xl" />
+                <div className="relative bg-card border border-border/50 rounded-xl p-8 space-y-4">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Crop className="w-4 h-4" />
+                    <span>Your Mission</span>
+                  </div>
+                  <p className="text-lg leading-relaxed">{mission}</p>
+                </div>
+              </motion.div>
+
+              {/* Generate Button */}
+              <div className="text-center space-y-4">
+                <p className="text-muted-foreground">
+                  Ready to see Shadow curate inspiration specifically for your mission?
+                </p>
+                
+                <Button
+                  onClick={handleGenerateMuseboard}
+                  disabled={isGeneratingContent || isPending}
+                  size="lg"
+                  className="group"
+                >
+                  {isGeneratingContent ? (
                     <>
                       <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4"
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                        className="w-4 h-4 mr-2"
                       >
-                        <Check className="w-6 h-6 text-green-500" />
+                        <Crop className="w-full h-full" />
                       </motion.div>
-                      <p className="font-medium mb-2 text-lg text-green-600">Upload successful!</p>
-                      <p className="text-sm text-muted-foreground">Setting up your Museboard...</p>
+                      Curating your Museboard...
+                    </>
+                  ) : (
+                    <>
+                      Generate My Museboard
+                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                     </>
                   )}
-                </div>
-              ) : isDragActive ? (
-                <p className="text-primary font-medium text-lg">Drop your inspiration here...</p>
-              ) : (
-                <div>
-                  <p className="font-medium mb-2 text-lg">Drag & drop your first inspiration</p>
-                  <p className="text-sm text-muted-foreground">
-                    Screenshots, photos, quotes - anything that connects to your mission
-                  </p>
+                </Button>
+              </div>
+
+              {/* Generation Progress */}
+              {isGeneratingContent && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-center space-y-3"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="flex gap-1">
+                      {[...Array(3)].map((_, i) => (
+                        <motion.div
+                          key={i}
+                          className="w-2 h-2 bg-primary rounded-full"
+                          animate={{ y: [0, -8, 0], opacity: [0.4, 1, 0.4] }}
+                          transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">Shadow is working...</p>
+                    <p className="text-xs text-muted-foreground">
+                      Finding quotes, insights, and inspiration aligned with your mission
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Edit Mission Option */}
+              {!isGeneratingContent && (
+                <div className="text-center">
+                  <button
+                    onClick={() => setShowMission(false)}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors underline"
+                  >
+                    Want to refine your mission?
+                  </button>
                 </div>
               )}
-            </div>
-
-            <div className="text-center">
-              <span className="text-xs text-muted-foreground">Step 2 of 2</span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

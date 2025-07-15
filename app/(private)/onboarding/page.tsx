@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createServer } from "@/lib/supabase/server";
-import { OnboardingClient } from "./onboarding-client";
+import { OnboardingClient } from "./onboarding-client";  // ← This import is correct
 
 export default async function OnboardingPage() {
   const supabase = createServer();
@@ -28,7 +28,7 @@ export default async function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <OnboardingClient user={user} existingMission={mission} />
+      <OnboardingClient user={user} existingMission={mission} />  {/* ← Change this line */}
     </div>
   );
 }

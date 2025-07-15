@@ -2,18 +2,23 @@
 
 import os
 import dspy
+import openai
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
 # Load environment variables from .env file
 load_dotenv()
 
+# --- OpenAI Client Configuration ---
+# Create a single, reusable OpenAI client instance for direct calls (e.g., embeddings)
+# This remains correct and is essential for our backfill script.
+openai_client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# --- DSPy Configuration (Updated) ---
-# Set up the language model (LM) for DSPy using the modern syntax
-# We are now using GPT-4o as requested.
+# --- DSPy Configuration (Corrected for DSPy 3.0) ---
+# Set up the language model (LM) for DSPy using the modern, unified dspy.LM class.
+# This matches the official documentation.
 gpt4o = dspy.LM(
-    'openai/gpt-4o', 
+    'openai/gpt-4o',
     api_key=os.getenv("OPENAI_API_KEY"),
     max_tokens=4000
 )
@@ -23,7 +28,7 @@ dspy.configure(lm=gpt4o)
 
 
 # --- Supabase Configuration ---
-# This remains the same
+# This remains correct
 supabase_url: str = os.environ.get("SUPABASE_URL")
 supabase_key: str = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 

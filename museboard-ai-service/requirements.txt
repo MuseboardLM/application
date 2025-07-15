@@ -1,7 +1,7 @@
-# In museboard-ai-service/requirements.txt
-dspy-ai[openai]
+git+https://github.com/stanfordnlp/dspy.git
 fastapi
 uvicorn[standard]
 supabase
 python-dotenv
 pydantic
+openai

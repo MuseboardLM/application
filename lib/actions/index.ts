@@ -1,9 +1,11 @@
-// lib/actions/index.ts
+// lib/actions/index.ts 
 
 // Export all server actions from a central location
 export * from './museboard';
 export * from './auth';
 export * from './mission';
+export * from './shadow';
+export * from './onboarding';
 
 // Re-export types for easy importing - updated with new types
 export type { ActionResult, MuseItemInput } from './museboard';
