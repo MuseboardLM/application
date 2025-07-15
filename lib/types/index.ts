@@ -23,6 +23,18 @@ export type UserMission = Database["public"]["Tables"]["user_missions"]["Row"];
 export type UserMissionInsert = Database["public"]["Tables"]["user_missions"]["Insert"];
 export type UserMissionUpdate = Database["public"]["Tables"]["user_missions"]["Update"];
 
+// --- 👇 ADDED TYPES FOR ONBOARDING ---
+export interface Hero {
+  name: string;
+  reason: string;
+}
+
+export interface Interest {
+  category: string;
+  description: string;
+}
+// --- END OF ADDED TYPES ---
+
 // AI Conversation types (will be in your updated Supabase types)
 export interface AIConversation {
   id: string;

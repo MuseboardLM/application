@@ -46,6 +46,16 @@ class MissionCrafter(dspy.Module):
         )
 
 
+# --- 👇 THIS MODULE AND SIGNATURE ARE UPDATED ---
+
+class InterestSuggestionSignature(dspy.Signature):
+    """Suggests heroes and interests based on user's mission and outputs them as a single JSON object."""
+    
+    mission_statement = dspy.InputField(desc="The user's refined mission statement")
+    
+    suggestions_json = dspy.OutputField(desc="A single, valid JSON object containing lists of suggested heroes and interests.")
+
+
 class InterestSuggester(dspy.Module):
     """
     DSPy module for suggesting heroes, role models, and interests based on user's mission.
@@ -53,40 +63,38 @@ class InterestSuggester(dspy.Module):
     
     def __init__(self):
         super().__init__()
-        self.suggest_interests = dspy.ChainOfThought(
-            "mission_statement -> hero_suggestions, interest_categories, reasoning"
-        )
+        # Use a Predict module with the updated signature for more reliable JSON output
+        self.suggest_interests = dspy.Predict(InterestSuggestionSignature)
         
     def forward(self, mission_statement: str) -> dspy.Prediction:
         """
         Analyzes the user's mission to suggest relevant heroes and interest categories.
         """
         
-        context = f"""
-        Based on this user's mission: "{mission_statement}"
-        
-        Suggest 8-10 inspiring figures (entrepreneurs, athletes, artists, leaders, etc.) who embody
-        similar values or have pursued similar paths. Include both well-known and lesser-known figures.
-        
-        Also suggest 5-6 broad interest categories that align with their mission.
-        
-        Format your response as JSON:
-        {{
-            "heroes": [
-                {{"name": "Person Name", "reason": "Why they're relevant to this mission"}},
+        # The new prompt guides the LM to produce a single, well-formed JSON output
+        prediction = self.suggest_interests(
+            mission_statement=f"""
+            Analyze the user's mission: "{mission_statement}"
+
+            Your task is to generate a list of 8-10 inspiring figures (heroes) and 5-6 broad interest categories relevant to this mission.
+            
+            You MUST format your entire response as a single, valid JSON object, structured exactly like this:
+            {{
+              "heroes": [
+                {{"name": "Person Name", "reason": "A brief explanation of why they are relevant."}},
                 ...
-            ],
-            "interests": [
-                {{"category": "Category Name", "description": "Why this matters for their mission"}},
+              ],
+              "interests": [
+                {{"category": "Category Name", "description": "A brief explanation of its relevance."}},
                 ...
-            ],
-            "reasoning": "Overall reasoning for these suggestions"
-        }}
+              ]
+            }}
+
+            Ensure the JSON is perfectly formed. Do not include any text, explanations, or markdown backticks outside of the JSON object itself.
+            """
+        )
         
-        Focus on diversity in backgrounds, industries, and approaches while maintaining relevance.
-        """
-        
-        return self.suggest_interests(mission_statement=context)
+        return prediction
 
 
 class ContentCurator(dspy.Module):
@@ -142,7 +150,8 @@ class ContentCurator(dspy.Module):
         )
 
 
-# New signatures for the onboarding modules
+# --- The rest of your signatures remain the same ---
+
 class MissionCraftingSignature(dspy.Signature):
     """Helps users craft and refine their life mission through conversation."""
     
@@ -153,16 +162,6 @@ class MissionCraftingSignature(dspy.Signature):
     refined_mission = dspy.OutputField(desc="Updated/refined version of their mission")
     next_question = dspy.OutputField(desc="Next question to ask them")
     mission_complete = dspy.OutputField(desc="'true' if mission is complete, 'false' if needs more work")
-
-
-class InterestSuggestionSignature(dspy.Signature):
-    """Suggests heroes and interests based on user's mission."""
-    
-    mission_statement = dspy.InputField(desc="The user's refined mission statement")
-    
-    hero_suggestions = dspy.OutputField(desc="JSON list of suggested heroes/role models")
-    interest_categories = dspy.OutputField(desc="JSON list of relevant interest categories")
-    reasoning = dspy.OutputField(desc="Explanation of why these suggestions fit their mission")
 
 
 class ContentCurationSignature(dspy.Signature):
