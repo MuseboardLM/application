@@ -10,7 +10,7 @@ import json
 from dspy_modules.chat import ShadowAgent
 from dspy_modules.search import RAG
 from dspy_modules.mission_enhance import MissionEnhancer
-from dspy_modules.onboarding import InterestSuggester 
+from dspy_modules.onboarding import InterestSuggester
 
 app = FastAPI()
 
@@ -79,15 +79,20 @@ async def search_museboard(request: SearchRequest):
 
 @app.post("/api/v1/onboarding/mission/enhance")
 async def enhance_mission(request: MissionEnhanceRequest):
-    # Your existing mission enhancement logic
+    """
+    Enhances user input into a clear, inspiring mission statement.
+    """
+    if not request.user_input or not request.user_input.strip():
+        raise HTTPException(status_code=400, detail="User input is required.")
+        
     try:
         prediction = mission_enhancer(user_input=request.user_input)
         return {"mission": prediction.mission, "enhanced": True}
     except Exception as e:
         print(f"Error in enhance_mission: {e}")
-        return {"mission": request.user_input, "enhanced": False}
+        # Fallback to input if enhancement fails
+        return {"mission": request.user_input.strip(), "enhanced": False}
 
-# --- 👇 THIS ENDPOINT IS UPDATED ---
 @app.post("/api/v1/onboarding/suggestions")
 async def get_inspiration_suggestions(request: SuggestionRequest):
     """

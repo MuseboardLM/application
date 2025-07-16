@@ -14,6 +14,7 @@ interface ChatInputProps {
   showSendButton?: boolean;
   buttonText?: string;
   rows?: number;
+  onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
 }
 
 export function ChatInput({
@@ -24,9 +25,11 @@ export function ChatInput({
   showSendButton = true,
   buttonText,
   rows = 1,
+  onChange,
 }: ChatInputProps) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [charCount, setCharCount] = useState(0);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -58,7 +61,12 @@ export function ChatInput({
       <textarea
         ref={textareaRef}
         value={value}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={(e) => {
+          setValue(e.target.value);
+          setCharCount(e.target.value.length);
+          // This ensures the function is only called if it exists.
+          onChange?.(e);
+        }}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         disabled={disabled}

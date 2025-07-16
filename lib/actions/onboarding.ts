@@ -72,7 +72,7 @@ export async function getInspirationSuggestionsAction(mission: string): Promise<
  * NEW: Saves heroes/interests, populates the Museboard, and completes onboarding.
  */
 export async function saveInspirationAndCompleteOnboardingAction(
-  heroes: string[], 
+  heroes: string[],
   interests: string[]
 ): Promise<ActionResult<{ items_added: number }>> {
   const supabase = createServer();
@@ -91,18 +91,18 @@ export async function saveInspirationAndCompleteOnboardingAction(
       .single();
 
     if (missionError || !missionData) throw new Error("Mission not found.");
-    
+
     // 2. Save heroes and interests to the user's mission record
     const { error: updateError } = await supabase
       .from("user_missions")
       .update({
-        heroes: heroes,      // Storing as a JSON array of strings
-        interests: interests,  // Storing as a JSON array of strings
+        heroes: heroes,       // Storing as a JSON array of strings
+        interests: interests,   // Storing as a JSON array of strings
       })
       .eq("user_id", user.id);
 
     if (updateError) throw updateError;
-    
+
     // 3. Call AI Service to get curated content
     const response = await fetch(`${AI_SERVICE_BASE_URL}/onboarding/content/curate`, {
       method: "POST",
@@ -127,7 +127,7 @@ export async function saveInspirationAndCompleteOnboardingAction(
       ai_summary: item.relevance_reason,
       ai_relevance_score: 0.9,
     }));
-    
+
     // 4. Insert curated content into muse_items
     const { error: insertError } = await supabase.from("muse_items").insert(contentItems);
     if (insertError) throw insertError;
@@ -137,7 +137,7 @@ export async function saveInspirationAndCompleteOnboardingAction(
       .from("user_missions")
       .update({ onboarding_completed: true })
       .eq("user_id", user.id);
-      
+
     if (completeError) throw completeError;
 
     // 6. Revalidate paths and return success
@@ -151,4 +151,41 @@ export async function saveInspirationAndCompleteOnboardingAction(
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
     return { success: false, error: `Failed to complete setup: ${errorMessage}` };
   }
+}
+
+// Add these new functions to your existing lib/actions/onboarding.ts
+
+export async function generateMissionAction(userInput: string): Promise<ActionResult<{ mission: string }>> {
+  if (!userInput || userInput.trim().length === 0) {
+    return { success: false, error: "Please share your goals or dreams first" };
+  }
+
+  try {
+    const response = await fetch(`${AI_SERVICE_BASE_URL}/onboarding/mission/enhance`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_input: userInput }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`AI service failed with status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return { success: true, data: { mission: data.mission } };
+
+  } catch (error) {
+    console.error("Error generating mission:", error);
+    // Fallback to simple enhancement
+    const words = userInput.trim().split(' ');
+    const fallbackMission = words.length > 10
+      ? userInput.substring(0, 100).trim() + (userInput.length > 100 ? "..." : "")
+      : userInput.trim();
+    return { success: true, data: { mission: fallbackMission } };
+  }
+}
+
+export async function refineMissionAction(input: string): Promise<ActionResult<{ mission: string }>> {
+  // Use the same endpoint but with combined context
+  return generateMissionAction(input);
 }

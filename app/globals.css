@@ -123,58 +123,34 @@
    
    /* ---------- Generic keyframes ------------------------------------- */
    @keyframes iridescent-shine {
-     0% {
-       background-position: 0% 50%;
-     }
-     50% {
-       background-position: 100% 50%;
-     }
-     100% {
-       background-position: 0% 50%;
-     }
+     0% { background-position: 0% 50%; }
+     50% { background-position: 100% 50%; }
+     100% { background-position: 0% 50%; }
+   }
+   @keyframes float {
+     0% { transform: translateY(-2px); }
+     50% { transform: translateY(2px); }
+     100% { transform: translateY(-2px); }
+   }
+   @keyframes shimmer {
+     0% { transform: translateX(-100%); }
+     100% { transform: translateX(100%); }
+   }
+   @keyframes subtle-pulse {
+     0%, 100% { transform: scale(1); }
+     50% { transform: scale(1.005); }
+   }
+   @keyframes enhanced-pulse {
+     0%, 100% { filter: brightness(1); }
+     50% { filter: brightness(1.02); }
    }
    
-   /* Keyframe for the subtle floating card animation we added */
-   @keyframes float {
-     0% {
-       transform: translateY(-2px);
-     }
-     50% {
-       transform: translateY(2px);
-     }
-     100% {
-       transform: translateY(-2px);
-     }
-   }
-
-   /* Shimmer animation keyframe */
-   @keyframes shimmer {
-     0% {
-       transform: translateX(-100%);
-     }
-     100% {
-       transform: translateX(100%);
-     }
-   }
-
-   /* Magnifying hover effect keyframes */
-   @keyframes subtle-pulse {
-     0%, 100% {
-       transform: scale(1);
-     }
-     50% {
-       transform: scale(1.005);
-     }
-   }
-
-   /* Enhanced pulse animation for magnified cards */
-   @keyframes enhanced-pulse {
-     0%, 100% {
-       filter: brightness(1);
-     }
-     50% {
-       filter: brightness(1.02);
-     }
+   /* ---------- Gradient Backdrop for Onboarding ---------------------- */
+   .onboarding-gradient-backdrop {
+     position: fixed;
+     inset: 0;
+     z-index: -1;
+     background: radial-gradient(ellipse at 50% 20%, oklch(0.06 0 0 / 0.6) 0%, #000 70%);
    }
    
    /* ---------- Base layer utilities ---------------------------------- */
@@ -197,12 +173,8 @@
      html {
        scroll-behavior: smooth;
      }
-
-     /* ================================================================
-        MUSEBOARD BACKGROUND FIX - Force solid black background
-        ================================================================ */
-     
-     /* Force Museboard pages to have solid black background */
+   
+     /* Force Museboard solid black background */
      [data-page="museboard"],
      .museboard-page,
      body:has([data-page="museboard"]) {
@@ -210,223 +182,7 @@
        background-color: #000 !important;
        background-image: none !important;
      }
-
-     /* Force any container within museboard to be black */
-     [data-page="museboard"] *,
-     .museboard-page * {
-       --background: #000;
-     }
-
-     /* Override any potential landing page backgrounds */
-     body:has([data-museboard-active]) {
-       background: #000 !important;
-       background-image: none !important;
-     }
-
-     /* Ensure chat overlay doesn't leave residue */
-     body:has([data-chat-active]) {
-       background: #000 !important;
-       background-image: none !important;
-     }
-
-     /* Force root to be black when on museboard */
-     html:has([data-page="museboard"]) {
-       background: #000 !important;
-       background-color: #000 !important;
-     }
-
-     /* Override any potential CSS custom properties */
-     [data-page="museboard"] {
-       --tw-bg-opacity: 1;
-       --tw-gradient-from: #000;
-       --tw-gradient-to: #000;
-       --tw-gradient-stops: #000;
-     }
    
-     .glow-primary {
-       box-shadow: 0 0 20px oklch(1 0 0 / 0.1), 0 0 40px oklch(1 0 0 / 0.05);
-     }
-     .glow-primary-strong {
-       box-shadow: 0 0 30px oklch(1 0 0 / 0.15), 0 0 60px oklch(1 0 0 / 0.08);
-     }
-     .text-glow {
-       text-shadow: 0 0 12px oklch(1 0 0 / 0.5);
-     }
-
-     /* Utility for adding a glow effect to cards on hover */
-     .card-glow-on-hover {
-       /* Apply a smooth transition to the shadow property */
-       @apply transition-shadow duration-300 ease-in-out;
-     }
-     .card-glow-on-hover:hover {
-       /* On hover, apply a white glow using the existing --glow variable */
-       box-shadow: 0 0 25px var(--glow);
-     }
-   
-     /* ================================================================
-        Electric-Iris — Hologram-Noise Overlay  (polished)
-        ================================================================ */
-     .text-iridescent {
-       --l: 88%;
-       --c: 0.5;
-   
-       background: linear-gradient(
-         130deg,
-         oklch(var(--l) var(--c) 330),
-         oklch(var(--l) var(--c) 270),
-         oklch(var(--l) var(--c) 210)
-       );
-       background-size: 220% 220%;
-       animation: holo-slide 7s ease-in-out infinite alternate;
-       position: relative;
-       -webkit-background-clip: text;
-       background-clip: text;
-       color: transparent;
-     }
-     .text-iridescent::after {
-       content: "";
-       position: absolute;
-       inset: 0;
-       pointer-events: none;
-       background: url("data:image/svg+xml,\
-         %3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E\
-           %3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4'/%3E%3C/filter%3E\
-           %3Crect width='20' height='20' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E")
-         repeat;
-       mix-blend-mode: soft-light;
-       -webkit-background-clip: text;
-       background-clip: text;
-       animation: holo-noise 6s linear infinite;
-     }
-     @keyframes holo-slide {
-       50% {
-         background-position: 100% 50%;
-       }
-     }
-     @keyframes holo-noise {
-       to {
-         transform: translateX(40px);
-       }
-     }
-   
-     /* accessibility */
-     @media (prefers-reduced-motion: reduce) {
-       .text-iridescent,
-       .text-iridescent::after {
-         animation: none !important;
-       }
-     }
-   
-     /* ================================================================
-        Brand icon — quick stroke-flow on hover
-        ================================================================ */
-     @keyframes icon-flow {
-       from {
-         stroke-dashoffset: 110;
-       }
-       to {
-         stroke-dashoffset: 0;
-       }
-     }
-     /* runs only when a parent .group is hovered */
-     .group:hover .icon-iridescent path {
-       stroke-dasharray: 110;
-       stroke-dashoffset: 110;
-       animation: icon-flow 0.6s linear forwards;
-     }
-
-     /* Hide Next.js dev tools badge */
-     [data-nextjs-badge-root] {
-       display: none !important;
-     }
-   }
-
-   /* ---------- Utility layer for animations and effects ------------- */
-   @layer utilities {
-     .animate-shimmer {
-       animation: shimmer 2s infinite;
-     }
-
-     /* Enhanced muse card magnification effects */
-     .muse-card-magnified {
-       position: relative;
-       transform-origin: center;
-       transition: all 0.15s ease-out;
-     }
-
-     /* Smooth magnification for better text readability */
-     .muse-card-magnified:hover {
-       /* Subtle brightness animation when magnified */
-       animation: enhanced-pulse 4s ease-in-out infinite;
-     }
-
-     /* Ensure magnified cards appear above others with enhanced spacing */
-     .muse-card-magnified::before {
-       content: '';
-       position: absolute;
-       inset: -20px;
-       background: transparent;
-       z-index: -1;
-       border-radius: inherit;
-       pointer-events: none;
-     }
-
-     /* SIMPLIFIED Chat input gradient that actually works */
-     .chat-input-gradient {
-       background: linear-gradient(135deg, 
-         rgba(255, 255, 255, 0.08) 0%, 
-         rgba(255, 255, 255, 0.03) 50%, 
-         rgba(255, 255, 255, 0.08) 100%
-       );
-       backdrop-filter: blur(16px);
-       border: 1px solid rgba(255, 255, 255, 0.12);
-       box-shadow: 
-         inset 0 1px 0 rgba(255, 255, 255, 0.1),
-         0 1px 3px rgba(0, 0, 0, 0.1);
-       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-     }
-
-     .chat-input-gradient:focus-within {
-       background: linear-gradient(135deg, 
-         rgba(255, 255, 255, 0.12) 0%, 
-         rgba(255, 255, 255, 0.06) 50%, 
-         rgba(255, 255, 255, 0.12) 100%
-       );
-       border-color: rgba(255, 255, 255, 0.3);
-       box-shadow: 
-         inset 0 1px 0 rgba(255, 255, 255, 0.2),
-         0 0 0 1px rgba(255, 255, 255, 0.1),
-         0 8px 32px rgba(255, 255, 255, 0.05);
-     }
-
-     /* Send button gradient */
-     .send-button-gradient {
-       background: linear-gradient(135deg, 
-         rgba(255, 255, 255, 1) 0%, 
-         rgba(255, 255, 255, 0.9) 100%
-       );
-       color: #000;
-       box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1);
-       transition: all 0.2s ease;
-     }
-
-     .send-button-gradient:hover:not(:disabled) {
-       background: linear-gradient(135deg, 
-         rgba(255, 255, 255, 0.9) 0%, 
-         rgba(255, 255, 255, 0.8) 100%
-       );
-       box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15);
-       transform: scale(1.05);
-     }
-
-     .send-button-gradient:disabled {
-       opacity: 0.5;
-       cursor: not-allowed;
-       transform: scale(1);
-       box-shadow: 0 2px 8px rgba(255, 255, 255, 0.05);
-     }
-
-     /* Force museboard background utilities */
      .force-black-bg {
        background: #000 !important;
        background-color: #000 !important;
@@ -434,34 +190,53 @@
      }
    }
    
-
-   /* ---------- Accessibility and reduced motion -------------------- */
-   @media (prefers-reduced-motion: reduce) {
+   /* ---------- Utility layer for animations and effects ------------- */
+   @layer utilities {
+     .animate-shimmer { animation: shimmer 2s infinite; }
+   
      .muse-card-magnified {
-       animation: none !important;
-       transition: transform 0.1s ease !important;
+       position: relative;
+       transform-origin: center;
+       transition: all 0.15s ease-out;
      }
-     
      .muse-card-magnified:hover {
-       animation: none !important;
+       animation: enhanced-pulse 4s ease-in-out infinite;
      }
-
+   
+     /* SIMPLIFIED chat-input gradient */
      .chat-input-gradient {
-       transition: all 0.1s ease !important;
+       background: linear-gradient(135deg,
+         rgba(255,255,255,0.08) 0%,
+         rgba(255,255,255,0.03) 50%,
+         rgba(255,255,255,0.08) 100%);
+       backdrop-filter: blur(16px);
+       border: 1px solid rgba(255,255,255,0.12);
+       transition: all 0.3s ease;
      }
-
+     .chat-input-gradient:focus-within {
+       border-color: rgba(255,255,255,0.3);
+     }
+   
+     /* Send button gradient */
      .send-button-gradient {
-       transition: all 0.1s ease !important;
+       background: linear-gradient(135deg, white 0%, rgba(255,255,255,0.9) 100%);
+       color: #000;
+       box-shadow: 0 2px 8px rgba(255,255,255,0.1);
+       transition: all 0.2s ease;
      }
-
      .send-button-gradient:hover:not(:disabled) {
-       transform: none !important;
+       transform: scale(1.05);
      }
-
-     /* Disable floating animation for reduced motion */
-     @keyframes float {
-       0%, 50%, 100% {
-         transform: translateY(0);
+   
+     /* Accessibility */
+     @media (prefers-reduced-motion: reduce) {
+       .muse-card-magnified,
+       .chat-input-gradient,
+       .send-button-gradient {
+         transition: all 0.1s ease !important;
+       }
+       .send-button-gradient:hover:not(:disabled) {
+         transform: none !important;
        }
      }
    }
