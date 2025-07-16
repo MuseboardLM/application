@@ -5,9 +5,11 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTypingPlaceholder } from "@/lib/hooks/use-typing-placeholder";
 
 interface ChatInputProps {
   placeholder?: string;
+  animatedPlaceholders?: string[];
   onSubmit: (value: string) => void;
   disabled?: boolean;
   className?: string;
@@ -15,10 +17,13 @@ interface ChatInputProps {
   buttonText?: string;
   rows?: number;
   onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  typingSpeed?: number;
+  pauseDuration?: number;
 }
 
 export function ChatInput({
   placeholder = "Type your message...",
+  animatedPlaceholders,
   onSubmit,
   disabled = false,
   className,
@@ -26,10 +31,26 @@ export function ChatInput({
   buttonText,
   rows = 1,
   onChange,
+  typingSpeed = 50,
+  pauseDuration = 2000,
 }: ChatInputProps) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [charCount, setCharCount] = useState(0);
+  const [isFocused, setIsFocused] = useState(false);
+
+  // Use animated placeholders if provided, otherwise use static placeholder
+  const { placeholder: animatedPlaceholder } = useTypingPlaceholder({
+    placeholders: animatedPlaceholders || [],
+    typingSpeed,
+    pauseDuration,
+    enabled: !isFocused && !value && !!animatedPlaceholders?.length,
+  });
+
+  // Determine which placeholder to show
+  const displayPlaceholder = animatedPlaceholders?.length 
+    ? (isFocused || value ? placeholder : animatedPlaceholder)
+    : placeholder;
 
   // Auto-resize textarea
   useEffect(() => {
@@ -53,6 +74,14 @@ export function ChatInput({
     }
   };
 
+  const handleFocus = () => {
+    setIsFocused(true);
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+  };
+
   return (
     <div className={cn(
       "chat-input-gradient flex items-end gap-3 p-4 rounded-2xl transition-all duration-200",
@@ -64,11 +93,12 @@ export function ChatInput({
         onChange={(e) => {
           setValue(e.target.value);
           setCharCount(e.target.value.length);
-          // This ensures the function is only called if it exists.
           onChange?.(e);
         }}
         onKeyDown={handleKeyDown}
-        placeholder={placeholder}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        placeholder={displayPlaceholder}
         disabled={disabled}
         rows={rows}
         className={cn(
