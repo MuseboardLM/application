@@ -12,7 +12,7 @@ const fontSans = FontSans({
 });
 
 export const metadata: Metadata = {
-  title: "MBLM - Re-shape your thinking.",
+  title: "MBLM - Re-Engineer Your Thinking.",
   description:
     "Keep your mission, dreams, and goals front of mind. All the time.",
 };
