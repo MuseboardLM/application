@@ -32,7 +32,7 @@ const ProgressIndicator = ({ currentStep }: { currentStep: OnboardingStep }) => 
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex items-center justify-center gap-4 mb-8"
+      className="flex items-center justify-center gap-4 mb-4"
     >
       <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-muted/30 border">
         <div className="text-xs font-medium text-muted-foreground">
@@ -83,9 +83,9 @@ export function OnboardingClient({ user, existingMission }: OnboardingClientProp
   // --- RENDER ---
 
   return (
-    <div className="min-h-screen w-full flex flex-col p-4 md:p-8 relative">
+    <div className="h-screen w-full flex flex-col p-4 md:p-8 relative overflow-hidden">
       <ProgressIndicator currentStep={step} />
-      <div className="flex-1 flex flex-col items-center justify-start pt-16 md:pt-20">
+      <div className="flex-1 flex flex-col items-center justify-start">
         <AnimatePresence mode="wait">
           {step === "mission" && (
             <motion.div

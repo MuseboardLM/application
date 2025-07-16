@@ -29,7 +29,6 @@ const badgeVariants = cva(
 export interface BadgeProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof badgeVariants> {
-  // --- 👇 ADD THIS onRemove PROP ---
   onRemove?: () => void;
 }
 
@@ -41,8 +40,8 @@ function Badge({ className, variant, onRemove, children, ...props }: BadgeProps)
     }
   };
 
-  // If onRemove is provided, make the variant destructive for clarity
-  const finalVariant = onRemove ? "destructive" : variant;
+  // Keep the original variant, don't force destructive when onRemove is present
+  const finalVariant = variant;
 
   return (
     <div className={cn(badgeVariants({ variant: finalVariant }), className)} {...props}>
@@ -50,10 +49,10 @@ function Badge({ className, variant, onRemove, children, ...props }: BadgeProps)
       {onRemove && (
         <button
           onClick={handleRemoveClick}
-          className="ml-1.5 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          className="ml-1.5 -mr-1 h-3 w-3 rounded-full hover:bg-background/20 flex items-center justify-center transition-colors outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
           aria-label={`Remove ${children}`}
         >
-          <X className="h-3 w-3 text-destructive-foreground hover:text-white" />
+          <X className="h-2 w-2" />
         </button>
       )}
     </div>

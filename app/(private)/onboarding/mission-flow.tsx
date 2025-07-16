@@ -61,13 +61,13 @@ const MissionInput = ({
       <div className="text-center">
         <h3 className="text-lg font-medium mb-2">Your North Star</h3>
         <p className="text-muted-foreground">
-          What are your dreams and goals?
+          What are the dreams that keep you up at night? The goals that make your heart race?
         </p>
       </div>
 
       <div className="relative max-w-2xl mx-auto">
         <ChatInput
-          placeholder="Share your dreams and goals. What must you absolutely achieve?"
+          placeholder="Share your dreams and goals. What must you absolutely accomplish?"
           animatedPlaceholders={MISSION_PLACEHOLDERS}
           onSubmit={onSubmit}
           disabled={disabled}
@@ -87,7 +87,8 @@ const MissionInput = ({
         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center">
           <Sparkles className="w-8 h-8 text-primary" />
         </div>
-        <p className="text-muted-foreground">Share your dreams, Shadow will craft your mission...</p>
+        <p className="text-muted-foreground">Share your ambitions.</p>
+        <p className="text-muted-foreground">Shadow AI will craft your mission.</p>
       </div>
     </motion.div>
   );
