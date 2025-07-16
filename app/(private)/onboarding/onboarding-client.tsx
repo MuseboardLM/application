@@ -7,9 +7,9 @@ import { User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { Target, Heart } from "lucide-react";
 import { MissionFlow } from "./mission-flow";
 import { InspirationStep } from "./inspiration-step";
+import { ProgressIndicator } from "./components/progress-indicator";
 import { saveInspirationAndCompleteOnboardingAction } from "@/lib/actions/onboarding";
 
 type OnboardingStep = "mission" | "inspiration" | "complete";
@@ -18,34 +18,6 @@ interface OnboardingClientProps {
   user: User;
   existingMission?: { mission_statement: string } | null;
 }
-
-// Progress indicator component
-const ProgressIndicator = ({ currentStep }: { currentStep: OnboardingStep }) => {
-  const steps = [
-    { key: "mission", label: "Mission", icon: Target },
-    { key: "inspiration", label: "Inspiration", icon: Heart }
-  ];
-  
-  const currentIndex = steps.findIndex(step => step.key === currentStep);
-  
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex items-center justify-center gap-4 mb-4"
-    >
-      <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-muted/30 border">
-        <div className="text-xs font-medium text-muted-foreground">
-          Step {currentIndex + 1} of {steps.length}
-        </div>
-        <div className="w-1 h-1 rounded-full bg-muted-foreground/40" />
-        <div className="text-xs font-medium capitalize text-foreground">
-          {steps[currentIndex]?.label}
-        </div>
-      </div>
-    </motion.div>
-  );
-};
 
 export function OnboardingClient({ user, existingMission }: OnboardingClientProps) {
   const router = useRouter();
@@ -83,7 +55,7 @@ export function OnboardingClient({ user, existingMission }: OnboardingClientProp
   // --- RENDER ---
 
   return (
-    <div className="h-screen w-full flex flex-col p-4 md:p-8 relative overflow-hidden">
+    <div className="min-h-screen w-full flex flex-col p-4 md:p-8 relative">
       <ProgressIndicator currentStep={step} />
       <div className="flex-1 flex flex-col items-center justify-start">
         <AnimatePresence mode="wait">

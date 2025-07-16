@@ -3,13 +3,12 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { ChatInput } from "@/components/ui/chat-input";
-import { ArrowRight, Sparkles, Loader2, Users, Heart, Plus } from "lucide-react";
+import { Sparkles, Loader2, Users, Heart } from "lucide-react";
 import IridescentIcon from "@/components/ui/iridescent-icon";
 import { getInspirationSuggestionsAction } from "@/lib/actions/onboarding";
-import { cn } from "@/lib/utils";
+import { InspirationSection } from "./components/inspiration-section";
 import type { Hero, Interest } from "@/lib/types";
 
 interface InspirationStepProps {
@@ -17,149 +16,6 @@ interface InspirationStepProps {
   onComplete: (heroes: string[], interests: string[]) => void;
   isSubmitting: boolean;
 }
-
-// Simple, clean selection chip
-const SelectionChip = ({ 
-  children, 
-  selected, 
-  onClick 
-}: { 
-  children: React.ReactNode;
-  selected?: boolean;
-  onClick?: () => void;
-}) => {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer",
-        selected 
-          ? "bg-white/10 border border-white/30 text-white" 
-          : "bg-secondary/30 border border-border/50 hover:bg-secondary/50 hover:border-white/20"
-      )}
-    >
-      {children}
-    </button>
-  );
-};
-
-// Clean section component
-const Section = ({ 
-  title, 
-  icon: Icon, 
-  suggestions, 
-  selected, 
-  onToggle, 
-  onCustomAdd,
-  placeholder,
-  isLoading,
-  selectedCount
-}: {
-  title: string;
-  icon: React.ComponentType<{ className?: string }>;
-  suggestions: Array<{ name?: string; category?: string }>;
-  selected: string[];
-  onToggle: (item: string) => void;
-  onCustomAdd: (input: string) => void;
-  placeholder: string;
-  isLoading: boolean;
-  selectedCount: number;
-}) => {
-  const [showCustomInput, setShowCustomInput] = useState(false);
-  const suggestionNames = suggestions.map(s => s.name || s.category).filter(Boolean).slice(0, 6);
-
-  return (
-    <div className="flex-1 space-y-6">
-      {/* Section Header */}
-      <div className="text-center">
-        <div className="relative inline-block">
-          <div className="w-12 h-12 mx-auto rounded-full bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center mb-3">
-            <Icon className="w-6 h-6 text-primary" />
-          </div>
-          {selectedCount > 0 && (
-            <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-              {selectedCount}
-            </div>
-          )}
-        </div>
-        <h3 className="text-xl font-semibold">{title}</h3>
-      </div>
-
-      {/* Suggestions */}
-      <div className="relative">
-        <div className="absolute -inset-1 bg-gradient-to-r from-sky-400/20 via-purple-400/20 to-rose-400/20 rounded-xl blur-md opacity-50" />
-        <div className="relative bg-gradient-to-br from-card via-card/90 to-card/70 rounded-xl p-6 shadow-2xl ring-1 ring-border/50 min-h-[200px] flex items-center justify-center">
-          {isLoading ? (
-            <div className="flex flex-col items-center gap-3 text-muted-foreground">
-              <Loader2 className="w-6 h-6 animate-spin" />
-              <span className="text-sm">Shadow is thinking...</span>
-            </div>
-          ) : (
-            <div className="w-full space-y-4">
-              <p className="text-sm text-muted-foreground text-center">
-                Shadow's suggestions for you:
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                {suggestionNames.map((suggestion) => (
-                  <SelectionChip
-                    key={suggestion}
-                    selected={selected.includes(suggestion)}
-                    onClick={() => onToggle(suggestion)}
-                  >
-                    {suggestion}
-                  </SelectionChip>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Add Custom */}
-      <div className="text-center">
-        <AnimatePresence mode="wait">
-          {showCustomInput ? (
-            <motion.div
-              key="input"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="space-y-3"
-            >
-              <ChatInput
-                placeholder={placeholder}
-                onSubmit={(input) => {
-                  onCustomAdd(input);
-                  setShowCustomInput(false);
-                }}
-                disabled={isLoading}
-                rows={1}
-              />
-              <button
-                onClick={() => setShowCustomInput(false)}
-                className="text-sm text-muted-foreground hover:text-foreground cursor-pointer"
-              >
-                Cancel
-              </button>
-            </motion.div>
-          ) : (
-            <motion.button
-              key="button"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowCustomInput(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-secondary/30 hover:bg-secondary/50 transition-all cursor-pointer mx-auto"
-            >
-              <Plus className="w-4 h-4" />
-              Add your own
-            </motion.button>
-          )}
-        </AnimatePresence>
-      </div>
-    </div>
-  );
-};
 
 export function InspirationStep({ mission, onComplete, isSubmitting }: InspirationStepProps) {
   const [isFetching, startFetching] = useTransition();
@@ -255,7 +111,7 @@ export function InspirationStep({ mission, onComplete, isSubmitting }: Inspirati
         transition={{ delay: 0.2 }}
         className="flex gap-12 mb-12"
       >
-        <Section
+        <InspirationSection
           title="Heroes & Mentors"
           icon={Users}
           suggestions={suggestions.heroes}
@@ -267,7 +123,7 @@ export function InspirationStep({ mission, onComplete, isSubmitting }: Inspirati
           selectedCount={selectedHeroes.length}
         />
 
-        <Section
+        <InspirationSection
           title="Interests & Topics"
           icon={Users}
           suggestions={suggestions.interests}
