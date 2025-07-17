@@ -6,6 +6,9 @@ export * from './auth';
 export * from './mission';
 export * from './shadow';
 export * from './onboarding';
+export * from './upload';
+export * from './ai';
+export * from './chat';
 
 // Re-export types for easy importing - updated with new types
 export type { ActionResult, MuseItemInput } from './museboard';
@@ -22,5 +25,6 @@ export type {
   AIMessage,
   ContentAnalysis,
   MagicBarAction,
-  MagicBarResult 
+  MagicBarResult,
+  MuseItemSort
 } from '@/lib/types';

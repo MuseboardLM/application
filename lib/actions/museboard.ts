@@ -1,12 +1,12 @@
 // lib/actions/museboard.ts
 
-
 "use server";
 
 import { createServer } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { redirect } from "next/navigation";
+import type { MuseItem, MuseItemSort } from "@/lib/types";
 
 // Reusable Zod schemas
 const UuidArraySchema = z.array(z.string().uuid()).min(1, {
@@ -281,5 +281,163 @@ export async function getMuseItem(id: string): Promise<ActionResult<any>> {
     return { success: true, data };
   } catch (error) {
     return handleActionError(error, "Failed to fetch muse item.");
+  }
+}
+
+// ============================================================================
+// MIGRATED FUNCTIONS FROM mission.ts - Content Addition & Search
+// ============================================================================
+
+/**
+ * Enhanced content addition with AI processing
+ */
+export async function addContentToMuseboardAction(
+  content: string,
+  contentType: "text" | "link",
+  options: { description?: string; sourceUrl?: string } = {}
+) {
+  const supabase = createServer();
+
+  try {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !user) {
+      return { success: false, error: "You must be logged in to add content" };
+    }
+
+    if (!content || content.trim().length === 0) {
+      return { success: false, error: "Content cannot be empty" };
+    }
+
+    if (content.length > 10000) {
+      return { success: false, error: "Content is too long (max 10,000 characters)" };
+    }
+
+    if (contentType === "link") {
+      try {
+        new URL(content);
+      } catch {
+        return { success: false, error: "Invalid URL format" };
+      }
+    }
+
+    const { data: insertData, error: insertError } = await supabase
+      .from("muse_items")
+      .insert({
+        user_id: user.id,
+        content: content.trim(),
+        content_type: contentType,
+        description: options.description?.trim() || null,
+        source_url: options.sourceUrl?.trim() || null,
+        image_width: null,
+        image_height: null,
+        ai_status: "pending",
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      throw new Error(`Database insert failed: ${insertError.message}`);
+    }
+
+    revalidatePath("/museboard");
+
+    return {
+      success: true,
+      data: {
+        id: insertData.id,
+        content: insertData.content,
+        contentType: insertData.content_type,
+      },
+    };
+
+  } catch (error) {
+    console.error("Add content action error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "An unexpected error occurred",
+    };
+  }
+}
+
+/**
+ * Search muse items with AI-enhanced filtering and dynamic sorting
+ */
+export async function searchMuseItems(
+  query: string,
+  options?: {
+    filters?: {
+      categories?: string[];
+      content_types?: string[];
+      relevance_threshold?: number;
+    };
+    sort?: MuseItemSort;
+  }
+) {
+  const supabase = createServer();
+  
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  
+  if (userError || !user) {
+    return { success: false, error: "Authentication required", data: [] };
+  }
+
+  try {
+    let queryBuilder = supabase
+      .from("muse_items")
+      .select("*")
+      .eq("user_id", user.id)
+      .is("deleted_at", null);
+
+    // Add text search using Full-Text Search for better performance and relevance
+    if (query.trim()) {
+      const keywords = query.trim().split(' ').filter(Boolean).join(' & ');
+      queryBuilder = queryBuilder.textSearch('fts', keywords, { type: 'websearch' });
+    }
+
+    const filters = options?.filters;
+    // Add category filter
+    if (filters?.categories && filters.categories.length > 0) {
+      queryBuilder = queryBuilder.overlaps("ai_categories", filters.categories);
+    }
+
+    // Add content type filter
+    if (filters?.content_types && filters.content_types.length > 0) {
+      queryBuilder = queryBuilder.in("content_type", filters.content_types);
+    }
+
+    // Add relevance threshold
+    if (filters?.relevance_threshold !== undefined) {
+      queryBuilder = queryBuilder.gte("ai_relevance_score", filters.relevance_threshold);
+    }
+
+    // Add dynamic sorting
+    const sort = options?.sort;
+    if (sort && sort.field && sort.direction) {
+        // For relevance, we add a secondary sort by creation date for tie-breaking
+        if(sort.field === 'ai_relevance_score') {
+            // Nulls are considered lowest, so for 'desc', they should come last.
+            queryBuilder = queryBuilder.order(sort.field, { ascending: sort.direction === 'asc', nullsFirst: true });
+            queryBuilder = queryBuilder.order('created_at', { ascending: false });
+        } else {
+            queryBuilder = queryBuilder.order(sort.field, { ascending: sort.direction === 'asc' });
+        }
+    } else {
+      // Default sort
+      queryBuilder = queryBuilder.order("created_at", { ascending: false });
+    }
+
+    const { data: items, error } = await queryBuilder.limit(100);
+
+    if (error) {
+      console.error("Search/Sort Error:", error.message);
+      return { success: false, error: "Failed to retrieve items. " + error.message, data: [] };
+    }
+
+    return { success: true, data: items as MuseItem[] };
+
+  } catch (error) {
+    console.error("Search action error:", error);
+    return { success: false, error: "An unexpected error occurred during search.", data: [] };
   }
 }

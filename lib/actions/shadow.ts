@@ -3,7 +3,7 @@
 "use server";
 
 import { createServer } from "@/lib/supabase/server";
-import { getShadowContext, getOrCreateActiveConversation } from "@/lib/actions/mission";
+import { getShadowContext, getOrCreateActiveConversation } from "@/lib/actions";
 import type { ActionResult, MuseItem } from "@/lib/types";
 
 // The base URL for your Python AI service.

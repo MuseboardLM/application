@@ -15,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { addContentToMuseboardAction } from "@/lib/actions/mission";
+import { addContentToMuseboardAction } from "@/lib/actions";
 
 interface AddLinkDialogProps {
   open: boolean;

@@ -13,7 +13,7 @@ import { UploadCloudIcon, XIcon, Trash2Icon } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import MuseItemModal from "./MuseItemModal";
-import { uploadFileToMuseboardAction, addContentToMuseboardAction } from "@/lib/actions/mission";
+import { uploadFileToMuseboardAction, addContentToMuseboardAction } from "@/lib/actions";
 import { softDeleteMuseItems } from "@/lib/actions/museboard";
 import { searchMuseboardAction } from "@/lib/actions/shadow";
 import { compressImage, getImageDimensions, supportsCompression, getCompressionRatio } from "@/lib/utils/image-compression";

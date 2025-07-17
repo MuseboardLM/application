@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createServer } from "@/lib/supabase/server";
-import { searchMuseItems } from "@/lib/actions/mission";
+import { searchMuseItems } from "@/lib/actions";
 import { MuseItem, MuseItemSort } from "@/lib/types";
 import MuseboardClientWrapper from "@/components/museboard/MuseboardClientWrapper";
 
