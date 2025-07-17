@@ -11,7 +11,7 @@ export default async function MuseboardPage({
 }: { 
   searchParams: { [key: string]: string | string[] | undefined } 
 }) {
-  const supabase = createServer();
+  const supabase = await createServer();
 
   const {
     data: { user },
@@ -21,10 +21,10 @@ export default async function MuseboardPage({
     redirect("/sign-in");
   }
 
-  // --- Parse search and sort params from URL ---
-  const query = typeof searchParams.q === 'string' ? searchParams.q : '';
-  const sortField = typeof searchParams.sort === 'string' ? searchParams.sort : 'created_at';
-  const sortDir = typeof searchParams.dir === 'string' ? searchParams.dir : 'desc';
+  const params = await searchParams;
+  const query = typeof params.q === 'string' ? params.q : '';
+  const sortField = typeof params.sort === 'string' ? params.sort : 'created_at';
+  const sortDir = typeof params.dir === 'string' ? params.dir : 'desc';
 
   const sort: MuseItemSort = {
     field: sortField as MuseItemSort['field'],

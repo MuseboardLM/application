@@ -55,7 +55,7 @@ export async function signInAction(prevState: any, formData: FormData): Promise<
   }
 
   try {
-    const supabase = createServer();
+    const supabase = await createServer();
     const { error } = await supabase.auth.signInWithPassword(validation.data);
 
     if (error) {
@@ -95,7 +95,7 @@ export async function signUpAction(prevState: any, formData: FormData): Promise<
   }
 
   try {
-    const supabase = createServer();
+    const supabase = await createServer();
     const { error } = await supabase.auth.signUp({
       email: validation.data.email,
       password: validation.data.password,
@@ -124,7 +124,7 @@ export async function signUpAction(prevState: any, formData: FormData): Promise<
  */
 export async function signOutAction(): Promise<AuthResult> {
   try {
-    const supabase = createServer();
+    const supabase = await createServer();
     const { error } = await supabase.auth.signOut();
 
     if (error) {
@@ -162,7 +162,7 @@ export async function resetPasswordAction(prevState: any, formData: FormData): P
   }
 
   try {
-    const supabase = createServer();
+    const supabase = await createServer();
     const { error } = await supabase.auth.resetPasswordForEmail(validation.data.email, {
       redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password`,
     });

@@ -28,7 +28,7 @@ export async function softDeleteMuseItems(
     return { success: false, error: "Invalid input provided." };
   }
 
-  const supabase = createServer();
+  const supabase = await createServer();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -72,7 +72,7 @@ export async function restoreMuseItems(
     return { success: false, error: "Invalid input provided." };
   }
 
-  const supabase = createServer();
+  const supabase = await createServer();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -115,7 +115,7 @@ export async function permanentlyDeleteMuseItems(
     return { success: false, error: "Invalid input provided." };
   }
 
-  const supabase = createServer();
+  const supabase = await createServer();
   const {
     data: { user },
   } = await supabase.auth.getUser();

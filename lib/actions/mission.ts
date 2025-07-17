@@ -31,7 +31,7 @@ export async function saveMissionAction(
   }
 
   try {
-    const supabase = createServer();
+    const supabase = await createServer();
     
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     
@@ -95,7 +95,7 @@ export async function saveMissionAction(
  */
 export async function completeOnboardingAction(): Promise<MissionResult> {
   try {
-    const supabase = createServer();
+    const supabase = await createServer();
     
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     
@@ -134,7 +134,7 @@ export async function completeOnboardingAction(): Promise<MissionResult> {
  * Get user mission
  */
 export async function getUserMission(): Promise<UserMission | null> {
-  const supabase = createServer();
+  const supabase = await createServer();
   
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   

@@ -4,7 +4,7 @@ import { createServer } from "@/lib/supabase/server";
 import TrashClientWrapper from "@/components/museboard/TrashClientWrapper";
 
 export default async function TrashView() {
-  const supabase = createServer();
+  const supabase = await createServer();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 

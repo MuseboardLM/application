@@ -34,7 +34,7 @@ export type ActionResult<T = void> = {
  * Helper function to get authenticated user
  */
 async function getAuthenticatedUser() {
-  const supabase = createServer();
+  const supabase = await createServer();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -296,7 +296,7 @@ export async function addContentToMuseboardAction(
   contentType: "text" | "link",
   options: { description?: string; sourceUrl?: string } = {}
 ) {
-  const supabase = createServer();
+  const supabase = await createServer();
 
   try {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -374,7 +374,7 @@ export async function searchMuseItems(
     sort?: MuseItemSort;
   }
 ) {
-  const supabase = createServer();
+  const supabase = await createServer();
   
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   

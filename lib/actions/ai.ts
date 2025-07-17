@@ -9,7 +9,7 @@ import type { MuseItem, ShadowContext } from "@/lib/types";
  * Get Shadow context for AI processing
  */
 export async function getShadowContext(): Promise<ShadowContext | null> {
-  const supabase = createServer();
+  const supabase = await createServer();
   
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   
@@ -107,7 +107,7 @@ export async function getShadowContext(): Promise<ShadowContext | null> {
  * Get items pending AI processing
  */
 export async function getItemsPendingAIProcessing(): Promise<MuseItem[]> {
-  const supabase = createServer();
+  const supabase = await createServer();
   
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   
@@ -140,7 +140,7 @@ export async function updateAIStatus(
     relevanceScore?: number;
   }
 ) {
-  const supabase = createServer();
+  const supabase = await createServer();
   
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   

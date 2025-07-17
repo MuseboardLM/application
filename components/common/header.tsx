@@ -11,7 +11,7 @@ type Profile = {
 } | null;
 
 export default async function Header() {
-  const supabase = createServer();
+  const supabase = await createServer(); // <-- Add await here
   let profile: Profile = null;
 
   const {

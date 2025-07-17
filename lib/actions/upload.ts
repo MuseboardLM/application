@@ -12,7 +12,7 @@ import type { MissionResult } from "@/lib/types";
  */
 export async function uploadOnboardingFileAction(formData: FormData): Promise<MissionResult> {
   try {
-    const supabase = createServer();
+    const supabase = await createServer();
     
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     
@@ -89,7 +89,7 @@ export async function uploadOnboardingFileAction(formData: FormData): Promise<Mi
  * Enhanced upload action with compression and thumbnail generation
  */
 export async function uploadFileToMuseboardAction(formData: FormData) {
-  const supabase = createServer();
+  const supabase = await createServer();
 
   try {
     const { data: { user }, error: userError } = await supabase.auth.getUser();

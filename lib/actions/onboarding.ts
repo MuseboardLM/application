@@ -14,7 +14,7 @@ const AI_SERVICE_BASE_URL = process.env.AI_SERVICE_URL || "http://127.0.0.1:8000
  * This remains largely the same but is now more focused on its single task.
  */
 export async function saveMissionAction(missionStatement: string): Promise<ActionResult<{ mission: string }>> {
-  const supabase = createServer();
+  const supabase = await createServer();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
 
   if (userError || !user) {
@@ -75,7 +75,7 @@ export async function saveInspirationAndCompleteOnboardingAction(
   heroes: string[],
   interests: string[]
 ): Promise<ActionResult<{ items_added: number }>> {
-  const supabase = createServer();
+  const supabase = await createServer();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
 
   if (userError || !user) {

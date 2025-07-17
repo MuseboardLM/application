@@ -5,7 +5,7 @@ import { createServer } from "@/lib/supabase/server";
 import { OnboardingClient } from "./onboarding-client";  // ← This import is correct
 
 export default async function OnboardingPage() {
-  const supabase = createServer();
+  const supabase = await createServer();
 
   const {
     data: { user },

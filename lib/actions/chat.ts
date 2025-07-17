@@ -12,7 +12,7 @@ export async function saveAIMessage(
   content: string,
   metadata?: any
 ) {
-  const supabase = createServer();
+  const supabase = await createServer();
   
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   
@@ -50,7 +50,7 @@ export async function saveAIMessage(
  * Get or create active AI conversation for user
  */
 export async function getOrCreateActiveConversation() {
-  const supabase = createServer();
+  const supabase = await createServer();
   
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   
@@ -91,7 +91,7 @@ export async function getOrCreateActiveConversation() {
  * Get conversation messages
  */
 export async function getConversationMessages(conversationId: string, limit = 50) {
-  const supabase = createServer();
+  const supabase = await createServer();
   
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   

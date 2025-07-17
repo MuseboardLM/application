@@ -17,7 +17,7 @@ export async function chatWithShadowAction(
   userMessage: string
 ): Promise<ActionResult<{ response: string }>> {
   
-  const supabase = createServer();
+  const supabase = await createServer();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
@@ -77,7 +77,7 @@ export async function chatWithShadowAction(
 export async function searchMuseboardAction(
   query: string
 ): Promise<ActionResult<{ answer: string; sources: MuseItem[] }>> {
-  const supabase = createServer();
+  const supabase = await createServer();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
